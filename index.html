@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Home Loan EMI Calculator with Prepayment & Savings (India)</title>
+    <meta name="description" content="Calculate your home loan EMI, see your amortization schedule, and discover how much you can save with extra payments and annual EMI increases. 100% free and instant.">
+    <meta name="google-site-verification" content="ql8ItaHWWYGchKXn8eC7XwHO1K8R4llNtESAsaeJ9x8" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for the range slider */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            cursor: pointer;
+            border-radius: 50%;
+            margin-top: -6px;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-blue-700">Home Loan EMI Calculator</h1>
+            <p class="text-gray-600 mt-2">Plan your loan repayment and see how much you can save.</p>
+        </header>
+
+        <main class="space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Input Form Section -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                    <form id="emi-form" onsubmit="return false;">
+                        <h2 class="text-2xl font-semibold mb-6 border-b pb-3 text-gray-700">Loan Details</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label for="loanAmount" class="block text-sm font-medium text-gray-700 mb-1">Loan Amount (₹)</label>
+                                <input type="number" id="loanAmount" value="5000000" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            </div>
+
+                            <div>
+                                <label for="interestRate" class="block text-sm font-medium text-gray-700 mb-1">Interest Rate (%)</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="range" id="interestRateSlider" min="5" max="15" step="0.05" value="8.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                    <input type="number" id="interestRate" min="5" max="15" step="0.05" value="8.5" class="w-24 p-3 bg-gray-100 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="tenure" class="block text-sm font-medium text-gray-700 mb-1">Loan Tenure (Years)</label>
+                                <input type="number" id="tenure" value="20" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-semibold mt-8 mb-4 border-b pb-3 text-gray-700">Prepayment Options</h3>
+                        <div class="space-y-6">
+                             <div>
+                                <label for="extraInstallments" class="block text-sm font-medium text-gray-700 mb-1">Extra EMIs per Year</label>
+                                <input type="number" id="extraInstallments" value="0" min="0" max="12" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            </div>
+                            <div>
+                                <label for="emiIncrease" class="block text-sm font-medium text-gray-700 mb-1">Annual EMI Increase (%)</label>
+                                <input type="number" id="emiIncrease" value="0" min="0" max="25" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Results and Amortization Section -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Summary Section -->
+                    <div id="results-summary" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hidden">
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Loan Summary</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <p class="text-sm text-blue-800 font-medium">Monthly EMI</p>
+                                <p id="monthly-emi" class="text-xl font-bold text-blue-900"></p>
+                            </div>
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 font-medium">Principal Amount</p>
+                                <p id="principal-amount" class="text-xl font-bold text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 font-medium">Total Interest</p>
+                                <p id="total-interest" class="text-xl font-bold text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-100 p-4 rounded-lg col-span-2 md:col-span-1">
+                                <p class="text-sm text-gray-600 font-medium">Total Payment</p>
+                                <p id="total-payment" class="text-xl font-bold text-gray-800"></p>
+                            </div>
+                             <div class="bg-green-50 p-4 rounded-lg">
+                                <p class="text-sm text-green-800 font-medium">Total Savings</p>
+                                <p id="total-savings" class="text-xl font-bold text-green-900"></p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <p class="text-sm text-green-800 font-medium">Time Saved</p>
+                                <p id="time-saved" class="text-xl font-bold text-green-900"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amortization Table Section -->
+                    <div id="amortization-section" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hidden">
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Amortization Schedule</h2>
+                        <div class="overflow-auto max-h-[600px] rounded-lg border">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-100 sticky top-0">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Month</th>
+                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">EMI Paid</th>
+                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Principal</th>
+                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Interest</th>
+                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="amortization-table-body" class="bg-white divide-y divide-gray-200">
+                                    <!-- JS will populate this -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Explanatory Content Sections -->
+            <div class="space-y-8">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Understanding Your Home Loan</h2>
+                    <p class="text-gray-600 mb-6">A home loan can seem complex, but it breaks down into a few simple parts. This calculator helps you see exactly how your loan works.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg text-blue-700 mb-2">Principal</h3>
+                            <p class="text-sm text-gray-700">This is the total amount of money you borrow from the bank to buy your home.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg text-blue-700 mb-2">Interest</h3>
+                            <p class="text-sm text-gray-700">This is the cost of borrowing the money, expressed as a percentage. You pay this to the bank over the life of the loan.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg text-blue-700 mb-2">Tenure</h3>
+                            <p class="text-sm text-gray-700">This is the total time, in years, you have to repay the loan in full.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">The Power of Prepayment: Save Lakhs!</h2>
+                    <p class="text-gray-600 mb-4">Making small extra payments on your home loan can have a massive impact. By paying more than your required EMI, you reduce the principal amount faster. Since interest is calculated on the outstanding principal, this simple strategy can save you a significant amount of money and help you become debt-free years earlier.</p>
+                    <div class="bg-green-50 border-l-4 border-green-500 text-green-800 p-4 rounded-lg" role="alert">
+                        <p class="font-bold">Consider this example:</p>
+                        <p class="mt-2 text-sm">On a ₹50 Lakh loan for 20 years at 8.5% interest, simply paying **one extra EMI** each year could help you save over **₹7 Lakhs** in interest and pay off your loan almost **3.5 years early!** Use the prepayment options in the calculator above to see your own potential savings.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Frequently Asked Questions (FAQ)</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="font-semibold text-lg text-gray-700">What is an amortization schedule?</h3>
+                            <p class="text-gray-600 mt-2 text-sm">The table shown in the results is your amortization schedule. It provides a month-by-month breakdown of your loan repayment. You can see exactly how much of each EMI goes towards reducing the principal and how much is paid as interest, along with your remaining balance after every payment.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg text-gray-700">Can I pay off my home loan early? Are there any charges?</h3>
+                            <p class="text-gray-600 mt-2 text-sm">Yes, you can absolutely pay off your loan early. As per RBI guidelines, there are **no prepayment penalties or foreclosure charges** on floating-rate home loans. This gives you the freedom to pay extra whenever you have surplus funds without any additional cost.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg text-gray-700">What is a good interest rate for a home loan?</h3>
+                            <p class="text-gray-600 mt-2 text-sm">Home loan interest rates vary based on the bank, your credit score, and the current economic conditions. Generally, rates offered by public sector banks like SBI or Bank of Baroda are very competitive. A "good" rate is typically the lowest rate you can get based on a strong credit score (usually 750 or above). It's always wise to compare offers from multiple lenders.</p>
+                        </div>
+                         <div>
+                            <h3 class="font-semibold text-lg text-gray-700">After a prepayment, should I reduce my EMI or my tenure?</h3>
+                            <p class="text-gray-600 mt-2 text-sm">Most banks will automatically reduce your loan tenure while keeping the EMI the same. This is the most beneficial option as it leads to maximum interest savings. Reducing the EMI provides more monthly cash flow but results in lower overall savings. If your goal is to become debt-free faster and save the most money, keeping the EMI constant and reducing the tenure is the better financial strategy.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
+            const loanAmountEl = document.getElementById('loanAmount');
+            const interestRateEl = document.getElementById('interestRate');
+            const interestRateSliderEl = document.getElementById('interestRateSlider');
+            const tenureEl = document.getElementById('tenure');
+            const extraInstallmentsEl = document.getElementById('extraInstallments');
+            const emiIncreaseEl = document.getElementById('emiIncrease');
+            
+            const resultsSummaryEl = document.getElementById('results-summary');
+            const amortizationSectionEl = document.getElementById('amortization-section');
+            const monthlyEmiEl = document.getElementById('monthly-emi');
+            const principalAmountEl = document.getElementById('principal-amount');
+            const totalInterestEl = document.getElementById('total-interest');
+            const totalPaymentEl = document.getElementById('total-payment');
+            const totalSavingsEl = document.getElementById('total-savings');
+            const timeSavedEl = document.getElementById('time-saved');
+            const tableBodyEl = document.getElementById('amortization-table-body');
+
+            // --- Helper Functions (Declared first to avoid ReferenceError) ---
+            
+            /**
+             * Formats a number into Indian Rupee currency format.
+             * @param {number} num The number to format.
+             * @returns {string} The formatted currency string.
+             */
+            const formatCurrency = (num) => {
+                return new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                }).format(num);
+            };
+
+            /**
+             * Converts a total number of months into a "Y years, M months" string.
+             * @param {number} totalMonths The total months.
+             * @returns {string} The formatted time string.
+             */
+            const formatTime = (totalMonths) => {
+                if (totalMonths <= 0) return '0 months';
+                const years = Math.floor(totalMonths / 12);
+                const months = totalMonths % 12;
+                let result = '';
+                if (years > 0) {
+                    result += `${years} year${years > 1 ? 's' : ''}`;
+                }
+                if (months > 0) {
+                    if (years > 0) result += ', ';
+                    result += `${months} month${months > 1 ? 's' : ''}`;
+                }
+                return result;
+            };
+
+            // --- Core Calculation Logic ---
+
+            /**
+             * Calculates the loan amortization schedule based on various parameters.
+             * @param {number} principal - The principal loan amount.
+             * @param {number} annualRate - The annual interest rate in percent.
+             * @param {number} tenureYears - The loan tenure in years.
+             * @param {number} extraInstallments - Number of extra EMIs paid per year.
+             * @param {number} emiIncreasePercent - The percentage to increase EMI annually.
+             * @returns {object} An object containing the schedule, totals, and initial EMI.
+             */
+            function calculateScenario(principal, annualRate, tenureYears, extraInstallments, emiIncreasePercent) {
+                const monthlyRate = annualRate / 12 / 100;
+                const tenureMonths = tenureYears * 12;
+                
+                if (principal <= 0 || monthlyRate <= 0 || tenureMonths <= 0) {
+                    return { schedule: [], totalInterest: 0, totalMonths: 0, initialEmi: 0 };
+                }
+
+                // Calculate the standard EMI
+                const emiPower = Math.pow(1 + monthlyRate, tenureMonths);
+                const initialEmi = principal * monthlyRate * emiPower / (emiPower - 1);
+
+                let balance = principal;
+                let currentEmi = initialEmi;
+                let months = 0;
+                let totalInterest = 0;
+                const schedule = [];
+
+                while (balance > 0) {
+                    months++;
+
+                    // Annual EMI increase
+                    if (emiIncreasePercent > 0 && months > 1 && (months - 1) % 12 === 0) {
+                        currentEmi *= (1 + emiIncreasePercent / 100);
+                    }
+
+                    let interestForMonth = balance * monthlyRate;
+                    let principalForMonth = currentEmi - interestForMonth;
+
+                    // Adjust final payment
+                    if (principalForMonth > balance) {
+                        principalForMonth = balance;
+                        currentEmi = balance + interestForMonth;
+                    }
+                    
+                    balance -= principalForMonth;
+                    totalInterest += interestForMonth;
+
+                    schedule.push({
+                        month: months,
+                        emi: currentEmi,
+                        principal: principalForMonth,
+                        interest: interestForMonth,
+                        balance: balance < 0.01 ? 0 : balance, // handle floating point inaccuracies
+                    });
+
+                    // Extra annual installments
+                    if (extraInstallments > 0 && months % 12 === 0 && balance > 0) {
+                        const extraPayment = extraInstallments * initialEmi;
+                        const actualExtraPayment = Math.min(extraPayment, balance);
+                        
+                        balance -= actualExtraPayment;
+                        
+                        schedule.push({
+                            month: `${months} (Extra)`,
+                            emi: actualExtraPayment,
+                            principal: actualExtraPayment,
+                            interest: 0,
+                            balance: balance < 0.01 ? 0 : balance,
+                        });
+                    }
+                    
+                    // Safety break to prevent infinite loops from bad inputs
+                    if (months > tenureYears * 12 * 2 && tenureYears > 0) {
+                        console.error("Calculation exceeded expected time. Breaking loop.");
+                        break;
+                    }
+                }
+
+                return { schedule, totalInterest, totalMonths: months, initialEmi };
+            }
+
+
+            // --- Main Display Function ---
+
+            /**
+             * Main function to orchestrate calculation and DOM updates.
+             */
+            function calculateAndDisplay() {
+                // Get user inputs
+                const principal = parseFloat(loanAmountEl.value) || 0;
+                const annualRate = parseFloat(interestRateEl.value) || 0;
+                const tenureYears = parseInt(tenureEl.value) || 0;
+                const extraInstallments = parseInt(extraInstallmentsEl.value) || 0;
+                const emiIncrease = parseFloat(emiIncreaseEl.value) || 0;
+                
+                if (principal <= 0 || annualRate <= 0 || tenureYears <= 0) {
+                    resultsSummaryEl.classList.add('hidden');
+                    amortizationSectionEl.classList.add('hidden');
+                    return;
+                }
+
+                // Calculate both standard and advanced scenarios
+                const standardResult = calculateScenario(principal, annualRate, tenureYears, 0, 0);
+                const advancedResult = calculateScenario(principal, annualRate, tenureYears, extraInstallments, emiIncrease);
+
+                // Calculate savings
+                const interestSaved = standardResult.totalInterest - advancedResult.totalInterest;
+                const timeSavedMonths = standardResult.totalMonths - advancedResult.totalMonths;
+
+                // Update Summary UI
+                resultsSummaryEl.classList.remove('hidden');
+                monthlyEmiEl.textContent = formatCurrency(standardResult.initialEmi);
+                principalAmountEl.textContent = formatCurrency(principal);
+                totalInterestEl.textContent = formatCurrency(advancedResult.totalInterest);
+                totalPaymentEl.textContent = formatCurrency(principal + advancedResult.totalInterest);
+                totalSavingsEl.textContent = formatCurrency(interestSaved > 0 ? interestSaved : 0);
+                timeSavedEl.textContent = formatTime(timeSavedMonths > 0 ? timeSavedMonths : 0);
+                
+                // Update Amortization Table UI
+                amortizationSectionEl.classList.remove('hidden');
+                tableBodyEl.innerHTML = ''; // Clear previous results
+                
+                advancedResult.schedule.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.month}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.emi)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.principal)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.interest)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right font-semibold">${formatCurrency(row.balance)}</td>
+                    `;
+                    tableBodyEl.appendChild(tr);
+                });
+            }
+
+            // --- Event Listeners ---
+            
+            // Add listeners to all inputs to recalculate on change
+            [loanAmountEl, interestRateEl, tenureEl, extraInstallmentsEl, emiIncreaseEl].forEach(el => {
+                el.addEventListener('input', calculateAndDisplay);
+            });
+
+            // Sync slider and number input for interest rate
+            interestRateSliderEl.addEventListener('input', (e) => {
+                interestRateEl.value = e.target.value;
+                calculateAndDisplay();
+            });
+            interestRateEl.addEventListener('input', (e) => {
+                // Also update slider when number is typed
+                interestRateSliderEl.value = e.target.value;
+            });
+            
+            // Initial calculation on page load
+            calculateAndDisplay();
+        });
+    </script>
+
+</body>
+</html>
