@@ -113,9 +113,9 @@
 
         /**
          * Converts a Unix timestamp to a human-readable IST time string.
-         * The function first validates the input, then creates a new Date object
-         * from the timestamp (multiplied by 1000 to convert from seconds to milliseconds),
-         * and finally formats the date using the 'en-IN' locale and 'Asia/Kolkata'
+         * The function first validates the input, then determines if it's in
+         * seconds or milliseconds based on its length. It then creates a new Date object
+         * and formats the date using the 'en-IN' locale and 'Asia/Kolkata'
          * time zone to ensure the output is in IST. The result is then displayed
          * in the designated HTML element.
          */
@@ -135,8 +135,23 @@
                 return;
             }
 
-            // A Unix timestamp is in seconds, so we multiply by 1000 to get milliseconds
-            const date = new Date(timestamp * 1000);
+            // Determine if the timestamp is in milliseconds (usually 13 digits) or seconds (10 digits)
+            // and adjust accordingly.
+            if (timestamp.toString().length === 13) {
+                // The timestamp is in milliseconds, so no conversion is needed
+            } else if (timestamp.toString().length === 10) {
+                // The timestamp is in seconds, so we multiply by 1000 to get milliseconds
+                timestamp *= 1000;
+            } else {
+                // Handle other lengths, assuming they are invalid
+                istTimeElement.textContent = "Invalid timestamp format.";
+                resultBox.classList.remove('hidden');
+                resultBox.style.borderColor = '#ff6b6b'; // Highlight error
+                return;
+            }
+
+            // Create a new Date object from the adjusted timestamp
+            const date = new Date(timestamp);
 
             // Format the date to Indian Standard Time (IST)
             const options = {
@@ -156,6 +171,7 @@
             // Update the HTML with the result
             istTimeElement.textContent = istString;
             resultBox.classList.remove('hidden');
+            resultBox.style.borderColor = '#4e4e7e'; // Reset border color on success
         }
     </script>
 </body>
