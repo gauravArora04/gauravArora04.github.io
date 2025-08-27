@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Loan EMI Calculator with Prepayment & Savings (India)</title>
-    <meta name="description" content="Calculate your car loan EMI, view the full repayment schedule, and see how much interest and time you can save with prepayments. Free, instant, and accurate.">
+    <title>Unix Timestamp to IST Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,395 +11,152 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
         }
-        /* Custom styles for the range slider */
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #1d4ed8; /* Darker Blue */
-            cursor: pointer;
-            border-radius: 50%;
-            margin-top: -6px;
+        .converter-card {
+            background-color: #2a2a44;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            border: 1px solid #3a3a5e;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        input[type=range]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: #1d4ed8;
-            cursor: pointer;
-            border-radius: 50%;
+        .converter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #84aaff;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            font-size: 1rem;
+            color: #c0c0d0;
+            margin-bottom: 2rem;
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #c0c0d0;
+            margin-bottom: 0.5rem;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #1e1e3b;
+            border: 1px solid #3a3a5e;
+            border-radius: 0.75rem;
+            color: #e0e0e0;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #84aaff;
+            box-shadow: 0 0 0 3px rgba(132, 170, 255, 0.3);
+        }
+        .result-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #1e1e3b;
+            border: 1px dashed #4e4e7e;
+            border-radius: 0.75rem;
+        }
+        .result-box h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 0.5rem;
+        }
+        .result-box p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #84aaff;
+            word-wrap: break-word; /* To handle long timestamps */
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+    <div class="converter-card">
+        <h1>Unix Timestamp to IST</h1>
+        <p>Enter a Unix timestamp to convert it to Indian Standard Time (IST).</p>
 
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-blue-800">Car Loan EMI Calculator</h1>
-            <p class="text-gray-600 mt-2">Instantly calculate your monthly car loan payments and plan your finances.</p>
-        </header>
+        <div class="input-group">
+            <label for="timestamp">Unix Timestamp</label>
+            <input type="number" id="timestamp" placeholder="e.g., 1672531200" min="0">
+        </div>
 
-        <main class="space-y-8">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Input Form Section -->
-                <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
-                    <form id="emi-form" onsubmit="return false;">
-                        <h2 class="text-2xl font-semibold mb-6 border-b pb-3 text-gray-700">Loan Details</h2>
-                        
-                        <div class="space-y-6">
-                            <div>
-                                <label for="loanAmount" class="block text-sm font-medium text-gray-700 mb-1">Loan Amount (₹)</label>
-                                <input type="number" id="loanAmount" value="800000" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            </div>
-
-                            <div>
-                                <label for="interestRate" class="block text-sm font-medium text-gray-700 mb-1">Interest Rate (%)</label>
-                                <div class="flex items-center space-x-4">
-                                    <input type="range" id="interestRateSlider" min="7" max="18" step="0.05" value="9.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                    <input type="number" id="interestRate" min="7" max="18" step="0.05" value="9.5" class="w-24 p-3 bg-gray-100 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="tenure" class="block text-sm font-medium text-gray-700 mb-1">Loan Tenure (Years)</label>
-                                <input type="number" id="tenure" value="5" max="7" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            </div>
-                        </div>
-
-                        <h3 class="text-xl font-semibold mt-8 mb-4 border-b pb-3 text-gray-700">Prepayment Options</h3>
-                        <div class="space-y-6">
-                             <div>
-                                <label for="extraInstallments" class="block text-sm font-medium text-gray-700 mb-1">Extra EMIs per Year</label>
-                                <input type="number" id="extraInstallments" value="0" min="0" max="12" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            </div>
-                            <div>
-                                <label for="emiIncrease" class="block text-sm font-medium text-gray-700 mb-1">Annual EMI Increase (%)</label>
-                                <input type="number" id="emiIncrease" value="0" min="0" max="25" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Results and Amortization Section -->
-                <div class="lg:col-span-2 space-y-8">
-                    <!-- Summary Section -->
-                    <div id="results-summary" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hidden">
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Loan Summary</h2>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-                            <div class="bg-blue-50 p-4 rounded-lg">
-                                <p class="text-sm text-blue-800 font-medium">Monthly EMI</p>
-                                <p id="monthly-emi" class="text-xl font-bold text-blue-900"></p>
-                            </div>
-                            <div class="bg-gray-100 p-4 rounded-lg">
-                                <p class="text-sm text-gray-600 font-medium">Principal Amount</p>
-                                <p id="principal-amount" class="text-xl font-bold text-gray-800"></p>
-                            </div>
-                            <div class="bg-gray-100 p-4 rounded-lg">
-                                <p class="text-sm text-gray-600 font-medium">Total Interest</p>
-                                <p id="total-interest" class="text-xl font-bold text-gray-800"></p>
-                            </div>
-                            <div class="bg-gray-100 p-4 rounded-lg col-span-2 md:col-span-1">
-                                <p class="text-sm text-gray-600 font-medium">Total Payment</p>
-                                <p id="total-payment" class="text-xl font-bold text-gray-800"></p>
-                            </div>
-                             <div class="bg-green-50 p-4 rounded-lg">
-                                <p class="text-sm text-green-800 font-medium">Total Savings</p>
-                                <p id="total-savings" class="text-xl font-bold text-green-900"></p>
-                            </div>
-                            <div class="bg-green-50 p-4 rounded-lg">
-                                <p class="text-sm text-green-800 font-medium">Time Saved</p>
-                                <p id="time-saved" class="text-xl font-bold text-green-900"></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Amortization Table Section -->
-                    <div id="amortization-section" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hidden">
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Repayment Schedule</h2>
-                        <div class="overflow-auto max-h-[600px] rounded-lg border">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-100 sticky top-0">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Month</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">EMI Paid</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Principal</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Interest</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Balance</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="amortization-table-body" class="bg-white divide-y divide-gray-200">
-                                    <!-- JS will populate this -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Explanatory Content Sections -->
-            <div class="space-y-8">
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Understanding Your Car Loan</h2>
-                    <p class="text-gray-600 mb-6">A car loan empowers you to buy your desired vehicle by paying for it in manageable monthly installments. Here’s a quick guide to the key terms:</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="font-bold text-lg text-blue-700 mb-2">Down Payment</h3>
-                            <p class="text-sm text-gray-700">This is the initial amount you pay upfront. A higher down payment reduces your loan amount, which means lower EMIs and less total interest.</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="font-bold text-lg text-blue-700 mb-2">Loan Amount</h3>
-                            <p class="text-sm text-gray-700">This is the money you borrow from the bank after your down payment. It's the "Principal" on which interest is calculated.</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="font-bold text-lg text-blue-700 mb-2">EMI</h3>
-                            <p class="text-sm text-gray-700">The Equated Monthly Installment (EMI) is the fixed amount you pay to the bank each month. It covers both principal and interest repayment.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Frequently Asked Questions (FAQ)</h2>
-                    <div class="space-y-6">
-                        <div>
-                            <h3 class="font-semibold text-lg text-gray-700">What is the usual tenure for a car loan?</h3>
-                            <p class="text-gray-600 mt-2 text-sm">Car loan tenures in India typically range from 1 to 7 years. While a longer tenure reduces your monthly EMI, it also means you pay more in total interest. A shorter tenure increases the EMI but saves you a significant amount of interest. Most people opt for a tenure of 3 to 5 years.</p>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-lg text-gray-700">Can I get 100% financing for a car?</h3>
-                            <p class="text-gray-600 mt-2 text-sm">No, banks in India generally do not offer 100% financing. You are required to make a down payment. Lenders typically finance 80% to 90% of the car's **ex-showroom price**. The remaining amount, plus registration charges, insurance, and other on-road costs, must be paid by you as the down payment.</p>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-lg text-gray-700">Are there prepayment charges on car loans?</h3>
-                            <p class="text-gray-600 mt-2 text-sm">This is a key difference from home loans. Many banks **do charge a penalty** for prepaying a car loan, typically ranging from 1% to 5% of the outstanding principal. This is because car loans are usually at a fixed interest rate. You must check the specific terms and conditions of your loan agreement before deciding to prepay.</p>
-                        </div>
-                         <div>
-                            <h3 class="font-semibold text-lg text-gray-700">What is a good interest rate for a car loan?</h3>
-                            <p class="text-gray-600 mt-2 text-sm">Car loan interest rates depend heavily on your credit score, the car model, and the lender. A good credit score (750+) can get you a rate between 8.5% and 10%. Rates can go up to 14% or higher for those with lower credit scores. Always compare offers from several banks before finalizing.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+        <div id="result" class="result-box hidden">
+            <h2>Converted IST Time</h2>
+            <p id="istTime">Waiting for conversion...</p>
+        </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- DOM Element References ---
-            const loanAmountEl = document.getElementById('loanAmount');
-            const interestRateEl = document.getElementById('interestRate');
-            const interestRateSliderEl = document.getElementById('interestRateSlider');
-            const tenureEl = document.getElementById('tenure');
-            const extraInstallmentsEl = document.getElementById('extraInstallments');
-            const emiIncreaseEl = document.getElementById('emiIncrease');
-            
-            const resultsSummaryEl = document.getElementById('results-summary');
-            const amortizationSectionEl = document.getElementById('amortization-section');
-            const monthlyEmiEl = document.getElementById('monthly-emi');
-            const principalAmountEl = document.getElementById('principal-amount');
-            const totalInterestEl = document.getElementById('total-interest');
-            const totalPaymentEl = document.getElementById('total-payment');
-            const totalSavingsEl = document.getElementById('total-savings');
-            const timeSavedEl = document.getElementById('time-saved');
-            const tableBodyEl = document.getElementById('amortization-table-body');
+        document.getElementById('timestamp').addEventListener('input', convertTimestamp);
 
-            // --- Helper Functions (Declared first to avoid ReferenceError) ---
-            
-            /**
-             * Formats a number into Indian Rupee currency format.
-             * @param {number} num The number to format.
-             * @returns {string} The formatted currency string.
-             */
-            const formatCurrency = (num) => {
-                return new Intl.NumberFormat('en-IN', {
-                    style: 'currency',
-                    currency: 'INR',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                }).format(num);
-            };
+        /**
+         * Converts a Unix timestamp to a human-readable IST time string.
+         * The function first validates the input, then creates a new Date object
+         * from the timestamp (multiplied by 1000 to convert from seconds to milliseconds),
+         * and finally formats the date using the 'en-IN' locale and 'Asia/Kolkata'
+         * time zone to ensure the output is in IST. The result is then displayed
+         * in the designated HTML element.
+         */
+        function convertTimestamp() {
+            const timestampInput = document.getElementById('timestamp');
+            const resultBox = document.getElementById('result');
+            const istTimeElement = document.getElementById('istTime');
 
-            /**
-             * Converts a total number of months into a "Y years, M months" string.
-             * @param {number} totalMonths The total months.
-             * @returns {string} The formatted time string.
-             */
-            const formatTime = (totalMonths) => {
-                if (totalMonths <= 0) return '0 months';
-                const years = Math.floor(totalMonths / 12);
-                const months = totalMonths % 12;
-                let result = '';
-                if (years > 0) {
-                    result += `${years} year${years > 1 ? 's' : ''}`;
-                }
-                if (months > 0) {
-                    if (years > 0) result += ', ';
-                    result += `${months} month${months > 1 ? 's' : ''}`;
-                }
-                return result;
-            };
+            // Get the value and convert to a number
+            let timestamp = Number(timestampInput.value);
 
-            // --- Core Calculation Logic ---
-
-            /**
-             * Calculates the loan amortization schedule based on various parameters.
-             * @param {number} principal - The principal loan amount.
-             * @param {number} annualRate - The annual interest rate in percent.
-             * @param {number} tenureYears - The loan tenure in years.
-             * @param {number} extraInstallments - Number of extra EMIs paid per year.
-             * @param {number} emiIncreasePercent - The percentage to increase EMI annually.
-             * @returns {object} An object containing the schedule, totals, and initial EMI.
-             */
-            function calculateScenario(principal, annualRate, tenureYears, extraInstallments, emiIncreasePercent) {
-                const monthlyRate = annualRate / 12 / 100;
-                const tenureMonths = tenureYears * 12;
-                
-                if (principal <= 0 || monthlyRate <= 0 || tenureMonths <= 0) {
-                    return { schedule: [], totalInterest: 0, totalMonths: 0, initialEmi: 0 };
-                }
-
-                // Calculate the standard EMI
-                const emiPower = Math.pow(1 + monthlyRate, tenureMonths);
-                const initialEmi = principal * monthlyRate * emiPower / (emiPower - 1);
-
-                let balance = principal;
-                let currentEmi = initialEmi;
-                let months = 0;
-                let totalInterest = 0;
-                const schedule = [];
-
-                while (balance > 0) {
-                    months++;
-
-                    // Annual EMI increase
-                    if (emiIncreasePercent > 0 && months > 1 && (months - 1) % 12 === 0) {
-                        currentEmi *= (1 + emiIncreasePercent / 100);
-                    }
-
-                    let interestForMonth = balance * monthlyRate;
-                    let principalForMonth = currentEmi - interestForMonth;
-
-                    // Adjust final payment
-                    if (principalForMonth > balance) {
-                        principalForMonth = balance;
-                        currentEmi = balance + interestForMonth;
-                    }
-                    
-                    balance -= principalForMonth;
-                    totalInterest += interestForMonth;
-
-                    schedule.push({
-                        month: months,
-                        emi: currentEmi,
-                        principal: principalForMonth,
-                        interest: interestForMonth,
-                        balance: balance < 0.01 ? 0 : balance, // handle floating point inaccuracies
-                    });
-
-                    // Extra annual installments
-                    if (extraInstallments > 0 && months % 12 === 0 && balance > 0) {
-                        const extraPayment = extraInstallments * initialEmi;
-                        const actualExtraPayment = Math.min(extraPayment, balance);
-                        
-                        balance -= actualExtraPayment;
-                        
-                        schedule.push({
-                            month: `${months} (Extra)`,
-                            emi: actualExtraPayment,
-                            principal: actualExtraPayment,
-                            interest: 0,
-                            balance: balance < 0.01 ? 0 : balance,
-                        });
-                    }
-                    
-                    // Safety break to prevent infinite loops from bad inputs
-                    if (months > tenureYears * 12 * 2 && tenureYears > 0) {
-                        console.error("Calculation exceeded expected time. Breaking loop.");
-                        break;
-                    }
-                }
-
-                return { schedule, totalInterest, totalMonths: months, initialEmi };
+            // Hide the result box if the input is empty or invalid
+            if (timestampInput.value === '' || isNaN(timestamp) || timestamp <= 0) {
+                resultBox.classList.add('hidden');
+                istTimeElement.textContent = "Waiting for conversion...";
+                resultBox.style.borderColor = '#4e4e7e'; // Reset border color
+                return;
             }
 
+            // A Unix timestamp is in seconds, so we multiply by 1000 to get milliseconds
+            const date = new Date(timestamp * 1000);
 
-            // --- Main Display Function ---
+            // Format the date to Indian Standard Time (IST)
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short',
+                timeZone: 'Asia/Kolkata' // 'Asia/Kolkata' is the IANA time zone for IST
+            };
 
-            /**
-             * Main function to orchestrate calculation and DOM updates.
-             */
-            function calculateAndDisplay() {
-                // Get user inputs
-                const principal = parseFloat(loanAmountEl.value) || 0;
-                const annualRate = parseFloat(interestRateEl.value) || 0;
-                const tenureYears = parseInt(tenureEl.value) || 0;
-                const extraInstallments = parseInt(extraInstallmentsEl.value) || 0;
-                const emiIncrease = parseFloat(emiIncreaseEl.value) || 0;
-                
-                if (principal <= 0 || annualRate <= 0 || tenureYears <= 0) {
-                    resultsSummaryEl.classList.add('hidden');
-                    amortizationSectionEl.classList.add('hidden');
-                    return;
-                }
+            // Use toLocaleString with the specified options to get the IST formatted string
+            const istString = date.toLocaleString('en-IN', options);
 
-                // Calculate both standard and advanced scenarios
-                const standardResult = calculateScenario(principal, annualRate, tenureYears, 0, 0);
-                const advancedResult = calculateScenario(principal, annualRate, tenureYears, extraInstallments, emiIncrease);
-
-                // Calculate savings
-                const interestSaved = standardResult.totalInterest - advancedResult.totalInterest;
-                const timeSavedMonths = standardResult.totalMonths - advancedResult.totalMonths;
-
-                // Update Summary UI
-                resultsSummaryEl.classList.remove('hidden');
-                monthlyEmiEl.textContent = formatCurrency(standardResult.initialEmi);
-                principalAmountEl.textContent = formatCurrency(principal);
-                totalInterestEl.textContent = formatCurrency(advancedResult.totalInterest);
-                totalPaymentEl.textContent = formatCurrency(principal + advancedResult.totalInterest);
-                totalSavingsEl.textContent = formatCurrency(interestSaved > 0 ? interestSaved : 0);
-                timeSavedEl.textContent = formatTime(timeSavedMonths > 0 ? timeSavedMonths : 0);
-                
-                // Update Amortization Table UI
-                amortizationSectionEl.classList.remove('hidden');
-                tableBodyEl.innerHTML = ''; // Clear previous results
-                
-                advancedResult.schedule.forEach(row => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50';
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.month}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.emi)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.principal)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.interest)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right font-semibold">${formatCurrency(row.balance)}</td>
-                    `;
-                    tableBodyEl.appendChild(tr);
-                });
-            }
-
-            // --- Event Listeners ---
-            
-            // Add listeners to all inputs to recalculate on change
-            [loanAmountEl, interestRateEl, tenureEl, extraInstallmentsEl, emiIncreaseEl].forEach(el => {
-                el.addEventListener('input', calculateAndDisplay);
-            });
-
-            // Sync slider and number input for interest rate
-            interestRateSliderEl.addEventListener('input', (e) => {
-                interestRateEl.value = e.target.value;
-                calculateAndDisplay();
-            });
-            interestRateEl.addEventListener('input', (e) => {
-                // Also update slider when number is typed
-                if (parseFloat(e.target.value) >= 7 && parseFloat(e.target.value) <= 18) {
-                    interestRateSliderEl.value = e.target.value;
-                }
-            });
-            
-            // Initial calculation on page load
-            calculateAndDisplay();
-        });
+            // Update the HTML with the result
+            istTimeElement.textContent = istString;
+            resultBox.classList.remove('hidden');
+        }
     </script>
-
 </body>
 </html>
