@@ -14,6 +14,7 @@
             background-color: #1a1a2e;
             color: #e0e0e0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
@@ -29,6 +30,7 @@
             text-align: center;
             border: 1px solid #3a3a5e;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 2rem;
         }
         .converter-card:hover {
             transform: translateY(-5px);
@@ -39,6 +41,12 @@
             font-weight: 700;
             color: #84aaff;
             margin-bottom: 0.5rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 1rem;
         }
         p {
             font-size: 1rem;
@@ -108,8 +116,30 @@
         </div>
     </div>
 
+    <div class="converter-card">
+        <h1>Difference Calculator</h1>
+        <p>Calculate the difference between two Unix timestamps in minutes.</p>
+
+        <div class="input-group">
+            <label for="timestamp1">Timestamp 1</label>
+            <input type="number" id="timestamp1" placeholder="e.g., 1672531200" min="0">
+        </div>
+
+        <div class="input-group">
+            <label for="timestamp2">Timestamp 2</label>
+            <input type="number" id="timestamp2" placeholder="e.g., 1672534800" min="0">
+        </div>
+
+        <div id="differenceResult" class="result-box hidden">
+            <h2>Time Difference</h2>
+            <p id="differenceTime">Waiting for calculation...</p>
+        </div>
+    </div>
+
     <script>
         document.getElementById('timestamp').addEventListener('input', convertTimestamp);
+        document.getElementById('timestamp1').addEventListener('input', calculateDifference);
+        document.getElementById('timestamp2').addEventListener('input', calculateDifference);
 
         /**
          * Converts a Unix timestamp to a human-readable IST time string.
@@ -172,6 +202,50 @@
             istTimeElement.textContent = istString;
             resultBox.classList.remove('hidden');
             resultBox.style.borderColor = '#4e4e7e'; // Reset border color on success
+        }
+
+        /**
+         * Calculates the difference between two Unix timestamps and displays the result in minutes.
+         * The function gets the values from two input fields, converts them to milliseconds
+         * if they are in seconds, and then calculates the absolute difference. The difference
+         * is then converted to minutes and displayed with two decimal places.
+         */
+        function calculateDifference() {
+            const timestamp1Input = document.getElementById('timestamp1');
+            const timestamp2Input = document.getElementById('timestamp2');
+            const differenceResultBox = document.getElementById('differenceResult');
+            const differenceTimeElement = document.getElementById('differenceTime');
+
+            let timestamp1 = Number(timestamp1Input.value);
+            let timestamp2 = Number(timestamp2Input.value);
+
+            // Hide result box if either input is empty or invalid
+            if (timestamp1Input.value === '' || timestamp2Input.value === '' || isNaN(timestamp1) || isNaN(timestamp2) || timestamp1 <= 0 || timestamp2 <= 0) {
+                differenceResultBox.classList.add('hidden');
+                differenceTimeElement.textContent = "Waiting for calculation...";
+                return;
+            }
+
+            // Function to normalize timestamp to milliseconds
+            const normalizeTimestamp = (ts) => {
+                if (ts.toString().length === 10) {
+                    return ts * 1000;
+                }
+                return ts;
+            };
+
+            const ts1 = normalizeTimestamp(timestamp1);
+            const ts2 = normalizeTimestamp(timestamp2);
+
+            // Calculate the absolute difference in milliseconds
+            const diffInMilliseconds = Math.abs(ts1 - ts2);
+
+            // Convert milliseconds to minutes
+            const diffInMinutes = diffInMilliseconds / (1000 * 60);
+
+            // Display the result formatted to two decimal places
+            differenceTimeElement.textContent = `${diffInMinutes.toFixed(2)} minutes`;
+            differenceResultBox.classList.remove('hidden');
         }
     </script>
 </body>
