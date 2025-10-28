@@ -57,6 +57,11 @@
             margin-bottom: 1.5rem;
             text-align: left;
         }
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Space between input and button */
+        }
         label {
             display: block;
             font-size: 0.875rem;
@@ -65,7 +70,7 @@
             margin-bottom: 0.5rem;
         }
         input[type="number"] {
-            width: 100%;
+            flex-grow: 1; /* Input takes up most space */
             padding: 0.75rem;
             background-color: #1e1e3b;
             border: 1px solid #3a3a5e;
@@ -78,6 +83,25 @@
             outline: none;
             border-color: #84aaff;
             box-shadow: 0 0 0 3px rgba(132, 170, 255, 0.3);
+        }
+        .paste-button {
+            background-color: #3a3a5e; /* Blending color */
+            color: #84aaff; /* Icon color */
+            padding: 0.75rem 0.9rem; /* Slightly reduced horizontal padding for better fit */
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* Prevents button from shrinking */
+        }
+        .paste-button:hover {
+            background-color: #4a4a6e;
+        }
+        .paste-button:active {
+            transform: scale(0.98);
         }
         .result-box {
             margin-top: 2rem;
@@ -100,14 +124,20 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen">
     <div class="converter-card">
         <h1>Unix Timestamp to IST</h1>
         <p>Enter a Unix timestamp to convert it to Indian Standard Time (IST).</p>
 
         <div class="input-group">
             <label for="timestamp">Unix Timestamp</label>
-            <input type="number" id="timestamp" placeholder="e.g., 1672531200" min="0">
+            <div class="input-wrapper">
+                <input type="number" id="timestamp" placeholder="e.g., 1672531200" min="0">
+                <button type="button" class="paste-button" onclick="pasteTimestamp('timestamp')">
+                    <!-- Lucide clipboard icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                </button>
+            </div>
         </div>
 
         <div id="result" class="result-box hidden">
@@ -122,12 +152,24 @@
 
         <div class="input-group">
             <label for="timestamp1">Timestamp 1</label>
-            <input type="number" id="timestamp1" placeholder="e.g., 1672531200" min="0">
+            <div class="input-wrapper">
+                <input type="number" id="timestamp1" placeholder="e.g., 1672531200" min="0">
+                <button type="button" class="paste-button" onclick="pasteTimestamp('timestamp1')">
+                    <!-- Lucide clipboard icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                </button>
+            </div>
         </div>
 
         <div class="input-group">
             <label for="timestamp2">Timestamp 2</label>
-            <input type="number" id="timestamp2" placeholder="e.g., 1672534800" min="0">
+            <div class="input-wrapper">
+                <input type="number" id="timestamp2" placeholder="e.g., 1672534800" min="0">
+                <button type="button" class="paste-button" onclick="pasteTimestamp('timestamp2')">
+                    <!-- Lucide clipboard icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                </button>
+            </div>
         </div>
 
         <div id="differenceResult" class="result-box hidden">
@@ -142,12 +184,76 @@
         document.getElementById('timestamp2').addEventListener('input', calculateDifference);
 
         /**
+         * Generic function to paste clipboard content into a specific input field
+         * and trigger the appropriate conversion/calculation.
+         * @param {string} inputId - The ID of the input field to paste into.
+         * @param {boolean} [overwrite=true] - If true, always paste. If false, only paste if the input is currently empty.
+         */
+        async function pasteTimestamp(inputId, overwrite = true) {
+            try {
+                const clipboardText = await navigator.clipboard.readText();
+                const numericValue = Number(clipboardText);
+
+                // Check if the clipboard content is a valid number
+                if (!isNaN(numericValue) && numericValue > 0) {
+                    const inputElement = document.getElementById(inputId);
+                    
+                    // Only paste if overwrite is true OR the field is currently empty
+                    if (overwrite || inputElement.value === "") { 
+                        inputElement.value = numericValue;
+                        
+                        // Trigger the correct function based on the inputId
+                        if (inputId === 'timestamp') {
+                            convertTimestamp();
+                        } else if (inputId === 'timestamp1' || inputId === 'timestamp2') {
+                            calculateDifference();
+                        }
+
+                        // Optional visual feedback for a successful paste
+                        inputElement.style.borderColor = '#84aaff';
+                        setTimeout(() => inputElement.style.borderColor = '#3a3a5e', 500);
+                    }
+                }
+            } catch (err) {
+                // This might fail if the user denies clipboard access, or in certain browser environments.
+                console.error('Failed to read clipboard contents for paste:', err);
+            }
+        }
+        
+        /**
+         * Attempts to paste from the clipboard on tab visibility change or load,
+         * but only if the target field is currently empty.
+         * @param {string} inputId - The ID of the input field to paste into.
+         */
+        function autoPasteOnFocus(inputId) {
+            // Call the main paste function with overwrite set to false
+            pasteTimestamp(inputId, false);
+        }
+
+        /**
+         * Event listener for the page's visibility state.
+         * When the page becomes visible again, it attempts to auto-paste into the main fields.
+         */
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                // Auto-paste into the primary converter field and Timestamp 1 only
+                autoPasteOnFocus('timestamp');
+                autoPasteOnFocus('timestamp1');
+            }
+        });
+
+        /**
+         * Calls the auto-paste function on initial page load.
+         */
+        window.onload = function() {
+            autoPasteOnFocus('timestamp');
+            autoPasteOnFocus('timestamp1');
+        };
+
+        /**
          * Converts a Unix timestamp to a human-readable IST time string.
          * The function first validates the input, then determines if it's in
-         * seconds or milliseconds based on its length. It then creates a new Date object
-         * and formats the date using the 'en-IN' locale and 'Asia/Kolkata'
-         * time zone to ensure the output is in IST. The result is then displayed
-         * in the designated HTML element.
+         * seconds or milliseconds based on its length.
          */
         function convertTimestamp() {
             const timestampInput = document.getElementById('timestamp');
@@ -206,9 +312,6 @@
 
         /**
          * Calculates the difference between two Unix timestamps and displays the result in minutes.
-         * The function gets the values from two input fields, converts them to milliseconds
-         * if they are in seconds, and then calculates the absolute difference. The difference
-         * is then converted to minutes and displayed with two decimal places.
          */
         function calculateDifference() {
             const timestamp1Input = document.getElementById('timestamp1');
