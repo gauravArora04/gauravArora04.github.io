@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unix Timestamp to IST Converter</title>
+    <title>Timestamp to IST Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,18 +15,65 @@
             color: #e0e0e0;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 1rem;
+            padding: 2rem 1rem;
+            margin: 0;
         }
+        
+        /* Tabs Styling */
+        .tabs-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 480px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 1rem;
+            background-color: #2a2a44;
+            border: 1px solid #3a3a5e;
+            border-radius: 1rem;
+            color: #c0c0d0;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab-button:hover {
+            background-color: #3a3a5e;
+        }
+        .tab-button.active {
+            background-color: #84aaff;
+            color: #1a1a2e;
+            border-color: #84aaff;
+            box-shadow: 0 4px 15px rgba(132, 170, 255, 0.3);
+        }
+        .tab-content {
+            display: none;
+            width: 100%;
+            max-width: 480px;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Styling */
         .converter-card {
             background-color: #2a2a44;
             padding: 2.5rem;
             border-radius: 1.5rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 480px;
             text-align: center;
             border: 1px solid #3a3a5e;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -60,7 +107,7 @@
         .input-wrapper {
             display: flex;
             align-items: center;
-            gap: 0.5rem; /* Space between input and button */
+            gap: 0.5rem;
         }
         label {
             display: block;
@@ -69,8 +116,8 @@
             color: #c0c0d0;
             margin-bottom: 0.5rem;
         }
-        input[type="number"] {
-            flex-grow: 1; /* Input takes up most space */
+        input[type="number"], input[type="text"] {
+            flex-grow: 1;
             padding: 0.75rem;
             background-color: #1e1e3b;
             border: 1px solid #3a3a5e;
@@ -78,16 +125,17 @@
             color: #e0e0e0;
             font-size: 1rem;
             transition: all 0.3s ease;
+            width: 100%;
         }
-        input[type="number"]:focus {
+        input[type="number"]:focus, input[type="text"]:focus {
             outline: none;
             border-color: #84aaff;
             box-shadow: 0 0 0 3px rgba(132, 170, 255, 0.3);
         }
         .paste-button {
-            background-color: #3a3a5e; /* Blending color */
-            color: #84aaff; /* Icon color */
-            padding: 0.75rem 0.9rem; /* Slightly reduced horizontal padding for better fit */
+            background-color: #3a3a5e;
+            color: #84aaff;
+            padding: 0.75rem 0.9rem;
             border-radius: 0.75rem;
             border: none;
             cursor: pointer;
@@ -95,7 +143,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0; /* Prevents button from shrinking */
+            flex-shrink: 0;
         }
         .paste-button:hover {
             background-color: #4a4a6e;
@@ -110,6 +158,9 @@
             border: 1px dashed #4e4e7e;
             border-radius: 0.75rem;
         }
+        .result-box.error {
+            border-color: #ff6b6b;
+        }
         .result-box h2 {
             font-size: 1.25rem;
             font-weight: 600;
@@ -117,238 +168,321 @@
             margin-bottom: 0.5rem;
         }
         .result-box p {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: #84aaff;
-            word-wrap: break-word; /* To handle long timestamps */
+            word-wrap: break-word;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen">
-    <div class="converter-card">
-        <h1>Unix Timestamp to IST</h1>
-        <p>Enter a Unix timestamp to convert it to Indian Standard Time (IST).</p>
+<body class="bg-gray-900 text-white flex flex-col items-center min-h-screen">
+    
+    <!-- Tab Navigation -->
+    <div class="tabs-container">
+        <button class="tab-button active" onclick="switchTab('unix')">UNIX Timestamp</button>
+        <button class="tab-button" onclick="switchTab('iso')">ISO 8601 Format</button>
+    </div>
 
-        <div class="input-group">
-            <label for="timestamp">Unix Timestamp</label>
-            <div class="input-wrapper">
-                <input type="number" id="timestamp" placeholder="e.g., 1672531200" min="0">
-                <button type="button" class="paste-button" onclick="pasteTimestamp('timestamp')">
-                    <!-- Lucide clipboard icon SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
-                </button>
+    <!-- ============================================== -->
+    <!-- UNIX TAB CONTENT -->
+    <!-- ============================================== -->
+    <div id="unix-tab" class="tab-content active">
+        <div class="converter-card">
+            <h1>Unix Timestamp to IST</h1>
+            <p>Enter a Unix timestamp to convert it to Indian Standard Time (IST).</p>
+
+            <div class="input-group">
+                <label for="timestamp">Unix Timestamp</label>
+                <div class="input-wrapper">
+                    <input type="number" id="timestamp" placeholder="e.g., 1672531200" min="0">
+                    <button type="button" class="paste-button" onclick="pasteContent('timestamp', true)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="result" class="result-box hidden">
+                <h2>Converted IST Time</h2>
+                <p id="istTime">Waiting for conversion...</p>
             </div>
         </div>
 
-        <div id="result" class="result-box hidden">
-            <h2>Converted IST Time</h2>
-            <p id="istTime">Waiting for conversion...</p>
+        <div class="converter-card">
+            <h1>Difference Calculator</h1>
+            <p>Calculate the difference between two Unix timestamps in minutes.</p>
+
+            <div class="input-group">
+                <label for="timestamp1">Timestamp 1</label>
+                <div class="input-wrapper">
+                    <input type="number" id="timestamp1" placeholder="e.g., 1672531200" min="0">
+                    <button type="button" class="paste-button" onclick="pasteContent('timestamp1', true)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="timestamp2">Timestamp 2</label>
+                <div class="input-wrapper">
+                    <input type="number" id="timestamp2" placeholder="e.g., 1672534800" min="0">
+                    <button type="button" class="paste-button" onclick="pasteContent('timestamp2', true)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="differenceResult" class="result-box hidden">
+                <h2>Time Difference</h2>
+                <p id="differenceTime">Waiting for calculation...</p>
+            </div>
         </div>
     </div>
 
-    <div class="converter-card">
-        <h1>Difference Calculator</h1>
-        <p>Calculate the difference between two Unix timestamps in minutes.</p>
+    <!-- ============================================== -->
+    <!-- ISO 8601 TAB CONTENT -->
+    <!-- ============================================== -->
+    <div id="iso-tab" class="tab-content">
+        <div class="converter-card">
+            <h1>ISO 8601 to IST</h1>
+            <p>Enter an ISO 8601 date string to convert it to Indian Standard Time.</p>
 
-        <div class="input-group">
-            <label for="timestamp1">Timestamp 1</label>
-            <div class="input-wrapper">
-                <input type="number" id="timestamp1" placeholder="e.g., 1672531200" min="0">
-                <button type="button" class="paste-button" onclick="pasteTimestamp('timestamp1')">
-                    <!-- Lucide clipboard icon SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
-                </button>
+            <div class="input-group">
+                <label for="isoTimestamp">ISO 8601 Timestamp</label>
+                <div class="input-wrapper">
+                    <input type="text" id="isoTimestamp" placeholder="e.g., 2024-03-25T14:30:00Z">
+                    <button type="button" class="paste-button" onclick="pasteContent('isoTimestamp', false)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="isoResult" class="result-box hidden">
+                <h2>Converted IST Time</h2>
+                <p id="isoIstTime">Waiting for conversion...</p>
             </div>
         </div>
 
-        <div class="input-group">
-            <label for="timestamp2">Timestamp 2</label>
-            <div class="input-wrapper">
-                <input type="number" id="timestamp2" placeholder="e.g., 1672534800" min="0">
-                <button type="button" class="paste-button" onclick="pasteTimestamp('timestamp2')">
-                    <!-- Lucide clipboard icon SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
-                </button>
-            </div>
-        </div>
+        <div class="converter-card">
+            <h1>Difference Calculator</h1>
+            <p>Calculate the difference between two ISO 8601 strings in minutes.</p>
 
-        <div id="differenceResult" class="result-box hidden">
-            <h2>Time Difference</h2>
-            <p id="differenceTime">Waiting for calculation...</p>
+            <div class="input-group">
+                <label for="isoTimestamp1">Timestamp 1</label>
+                <div class="input-wrapper">
+                    <input type="text" id="isoTimestamp1" placeholder="e.g., 2024-03-25T10:00:00Z">
+                    <button type="button" class="paste-button" onclick="pasteContent('isoTimestamp1', false)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="isoTimestamp2">Timestamp 2</label>
+                <div class="input-wrapper">
+                    <input type="text" id="isoTimestamp2" placeholder="e.g., 2024-03-25T11:30:00Z">
+                    <button type="button" class="paste-button" onclick="pasteContent('isoTimestamp2', false)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="6" height="4" rx="1" ry="1"></rect><path d="M15 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="isoDifferenceResult" class="result-box hidden">
+                <h2>Time Difference</h2>
+                <p id="isoDifferenceTime">Waiting for calculation...</p>
+            </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('timestamp').addEventListener('input', convertTimestamp);
-        document.getElementById('timestamp1').addEventListener('input', calculateDifference);
-        document.getElementById('timestamp2').addEventListener('input', calculateDifference);
+        // Event Listeners for Input changes
+        document.getElementById('timestamp').addEventListener('input', convertUnixTimestamp);
+        document.getElementById('timestamp1').addEventListener('input', calculateUnixDifference);
+        document.getElementById('timestamp2').addEventListener('input', calculateUnixDifference);
+        
+        document.getElementById('isoTimestamp').addEventListener('input', convertISOTimestamp);
+        document.getElementById('isoTimestamp1').addEventListener('input', calculateISODifference);
+        document.getElementById('isoTimestamp2').addEventListener('input', calculateISODifference);
+
+        /**
+         * Tab switching logic
+         */
+        function switchTab(tabId) {
+            // Hide all contents and deactivate buttons
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+
+            // Show selected content and activate button
+            document.getElementById(tabId + '-tab').classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        }
 
         /**
          * Generic function to paste clipboard content into a specific input field
-         * and trigger the appropriate conversion/calculation.
-         * @param {string} inputId - The ID of the input field to paste into.
-         * @param {boolean} [overwrite=true] - If true, always paste. If false, only paste if the input is currently empty.
+         * @param {string} inputId - ID of input
+         * @param {boolean} isNumeric - if true validates as number, if false validates as string
+         * @param {boolean} [overwrite=true] - paste behavior
          */
-        async function pasteTimestamp(inputId, overwrite = true) {
+        async function pasteContent(inputId, isNumeric = true, overwrite = true) {
             try {
                 const clipboardText = await navigator.clipboard.readText();
-                const numericValue = Number(clipboardText);
-
-                // Check if the clipboard content is a valid number
-                if (!isNaN(numericValue) && numericValue > 0) {
-                    const inputElement = document.getElementById(inputId);
-                    
-                    // Only paste if overwrite is true OR the field is currently empty
-                    if (overwrite || inputElement.value === "") { 
-                        inputElement.value = numericValue;
-                        
-                        // Trigger the correct function based on the inputId
-                        if (inputId === 'timestamp') {
-                            convertTimestamp();
-                        } else if (inputId === 'timestamp1' || inputId === 'timestamp2') {
-                            calculateDifference();
+                const inputElement = document.getElementById(inputId);
+                
+                if (overwrite || inputElement.value === "") { 
+                    if (isNumeric) {
+                        const numericValue = Number(clipboardText);
+                        if (!isNaN(numericValue) && numericValue > 0) {
+                            inputElement.value = numericValue;
+                            triggerCorrectAction(inputId);
+                            flashSuccess(inputElement);
                         }
-
-                        // Optional visual feedback for a successful paste
-                        inputElement.style.borderColor = '#84aaff';
-                        setTimeout(() => inputElement.style.borderColor = '#3a3a5e', 500);
+                    } else {
+                        if (clipboardText.trim().length > 0) {
+                            inputElement.value = clipboardText.trim();
+                            triggerCorrectAction(inputId);
+                            flashSuccess(inputElement);
+                        }
                     }
                 }
             } catch (err) {
-                // This might fail if the user denies clipboard access, or in certain browser environments.
                 console.error('Failed to read clipboard contents for paste:', err);
             }
         }
-        
-        /**
-         * Attempts to paste from the clipboard on tab visibility change or load,
-         * but only if the target field is currently empty.
-         * @param {string} inputId - The ID of the input field to paste into.
-         */
-        function autoPasteOnFocus(inputId) {
-            // Call the main paste function with overwrite set to false
-            pasteTimestamp(inputId, false);
+
+        function triggerCorrectAction(inputId) {
+            if (inputId === 'timestamp') convertUnixTimestamp();
+            else if (inputId === 'timestamp1' || inputId === 'timestamp2') calculateUnixDifference();
+            else if (inputId === 'isoTimestamp') convertISOTimestamp();
+            else if (inputId === 'isoTimestamp1' || inputId === 'isoTimestamp2') calculateISODifference();
         }
 
-        /**
-         * Event listener for the page's visibility state.
-         * When the page becomes visible again, it attempts to auto-paste into the main fields.
-         */
+        function flashSuccess(element) {
+            element.style.borderColor = '#84aaff';
+            setTimeout(() => element.style.borderColor = '#3a3a5e', 500);
+        }
+
+        function autoPasteOnFocus(inputId, isNumeric) {
+            pasteContent(inputId, isNumeric, false);
+        }
+
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                // Auto-paste into the primary converter field and Timestamp 1 only
-                autoPasteOnFocus('timestamp');
-                autoPasteOnFocus('timestamp1');
+                autoPasteOnFocus('timestamp', true);
+                autoPasteOnFocus('timestamp1', true);
+                autoPasteOnFocus('isoTimestamp', false);
+                autoPasteOnFocus('isoTimestamp1', false);
             }
         });
 
-        /**
-         * Calls the auto-paste function on initial page load.
-         */
         window.onload = function() {
-            autoPasteOnFocus('timestamp');
-            autoPasteOnFocus('timestamp1');
+            autoPasteOnFocus('timestamp', true);
+            autoPasteOnFocus('isoTimestamp', false);
         };
 
-        /**
-         * Converts a Unix timestamp to a human-readable IST time string.
-         * The function first validates the input, then determines if it's in
-         * seconds or milliseconds based on its length.
-         */
-        function convertTimestamp() {
-            const timestampInput = document.getElementById('timestamp');
+        const IST_OPTIONS = {
+            year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            timeZoneName: 'short', timeZone: 'Asia/Kolkata'
+        };
+
+        /* ============================
+           UNIX LOGIC
+           ============================ */
+
+        function convertUnixTimestamp() {
+            const input = document.getElementById('timestamp');
             const resultBox = document.getElementById('result');
             const istTimeElement = document.getElementById('istTime');
+            let timestamp = Number(input.value);
 
-            // Get the value and convert to a number
-            let timestamp = Number(timestampInput.value);
-
-            // Hide the result box if the input is empty or invalid
-            if (timestampInput.value === '' || isNaN(timestamp) || timestamp <= 0) {
+            if (input.value === '' || isNaN(timestamp) || timestamp <= 0) {
                 resultBox.classList.add('hidden');
-                istTimeElement.textContent = "Waiting for conversion...";
-                resultBox.style.borderColor = '#4e4e7e'; // Reset border color
                 return;
             }
 
-            // Determine if the timestamp is in milliseconds (usually 13 digits) or seconds (10 digits)
-            // and adjust accordingly.
-            if (timestamp.toString().length === 13) {
-                // The timestamp is in milliseconds, so no conversion is needed
-            } else if (timestamp.toString().length === 10) {
-                // The timestamp is in seconds, so we multiply by 1000 to get milliseconds
-                timestamp *= 1000;
-            } else {
-                // Handle other lengths, assuming they are invalid
-                istTimeElement.textContent = "Invalid timestamp format.";
-                resultBox.classList.remove('hidden');
-                resultBox.style.borderColor = '#ff6b6b'; // Highlight error
+            if (timestamp.toString().length === 10) timestamp *= 1000;
+            else if (timestamp.toString().length !== 13) {
+                showError(resultBox, istTimeElement, "Invalid timestamp format.");
                 return;
             }
 
-            // Create a new Date object from the adjusted timestamp
             const date = new Date(timestamp);
-
-            // Format the date to Indian Standard Time (IST)
-            const options = {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZoneName: 'short',
-                timeZone: 'Asia/Kolkata' // 'Asia/Kolkata' is the IANA time zone for IST
-            };
-
-            // Use toLocaleString with the specified options to get the IST formatted string
-            const istString = date.toLocaleString('en-IN', options);
-
-            // Update the HTML with the result
-            istTimeElement.textContent = istString;
-            resultBox.classList.remove('hidden');
-            resultBox.style.borderColor = '#4e4e7e'; // Reset border color on success
+            showSuccess(resultBox, istTimeElement, date.toLocaleString('en-IN', IST_OPTIONS));
         }
 
-        /**
-         * Calculates the difference between two Unix timestamps and displays the result in minutes.
-         */
-        function calculateDifference() {
-            const timestamp1Input = document.getElementById('timestamp1');
-            const timestamp2Input = document.getElementById('timestamp2');
-            const differenceResultBox = document.getElementById('differenceResult');
+        function calculateUnixDifference() {
+            const t1Input = document.getElementById('timestamp1').value;
+            const t2Input = document.getElementById('timestamp2').value;
+            const resultBox = document.getElementById('differenceResult');
             const differenceTimeElement = document.getElementById('differenceTime');
 
-            let timestamp1 = Number(timestamp1Input.value);
-            let timestamp2 = Number(timestamp2Input.value);
-
-            // Hide result box if either input is empty or invalid
-            if (timestamp1Input.value === '' || timestamp2Input.value === '' || isNaN(timestamp1) || isNaN(timestamp2) || timestamp1 <= 0 || timestamp2 <= 0) {
-                differenceResultBox.classList.add('hidden');
-                differenceTimeElement.textContent = "Waiting for calculation...";
+            if (!t1Input || !t2Input || isNaN(t1Input) || isNaN(t2Input)) {
+                resultBox.classList.add('hidden');
                 return;
             }
 
-            // Function to normalize timestamp to milliseconds
-            const normalizeTimestamp = (ts) => {
-                if (ts.toString().length === 10) {
-                    return ts * 1000;
-                }
-                return ts;
-            };
+            const normalize = (ts) => ts.toString().length === 10 ? ts * 1000 : Number(ts);
+            const diffMs = Math.abs(normalize(t1Input) - normalize(t2Input));
+            
+            showSuccess(resultBox, differenceTimeElement, `${(diffMs / 60000).toFixed(2)} minutes`);
+        }
 
-            const ts1 = normalizeTimestamp(timestamp1);
-            const ts2 = normalizeTimestamp(timestamp2);
+        /* ============================
+           ISO 8601 LOGIC
+           ============================ */
 
-            // Calculate the absolute difference in milliseconds
-            const diffInMilliseconds = Math.abs(ts1 - ts2);
+        function convertISOTimestamp() {
+            const input = document.getElementById('isoTimestamp');
+            const resultBox = document.getElementById('isoResult');
+            const istTimeElement = document.getElementById('isoIstTime');
 
-            // Convert milliseconds to minutes
-            const diffInMinutes = diffInMilliseconds / (1000 * 60);
+            if (input.value.trim() === '') {
+                resultBox.classList.add('hidden');
+                return;
+            }
 
-            // Display the result formatted to two decimal places
-            differenceTimeElement.textContent = `${diffInMinutes.toFixed(2)} minutes`;
-            differenceResultBox.classList.remove('hidden');
+            const date = new Date(input.value.trim());
+            if (isNaN(date.getTime())) {
+                showError(resultBox, istTimeElement, "Invalid ISO 8601 format.");
+                return;
+            }
+
+            showSuccess(resultBox, istTimeElement, date.toLocaleString('en-IN', IST_OPTIONS));
+        }
+
+        function calculateISODifference() {
+            const t1Input = document.getElementById('isoTimestamp1').value.trim();
+            const t2Input = document.getElementById('isoTimestamp2').value.trim();
+            const resultBox = document.getElementById('isoDifferenceResult');
+            const diffElement = document.getElementById('isoDifferenceTime');
+
+            if (!t1Input || !t2Input) {
+                resultBox.classList.add('hidden');
+                return;
+            }
+
+            const date1 = new Date(t1Input);
+            const date2 = new Date(t2Input);
+
+            if (isNaN(date1.getTime()) || isNaN(date2.getTime())) {
+                showError(resultBox, diffElement, "One or both ISO dates are invalid.");
+                return;
+            }
+
+            const diffMs = Math.abs(date1.getTime() - date2.getTime());
+            showSuccess(resultBox, diffElement, `${(diffMs / 60000).toFixed(2)} minutes`);
+        }
+
+        /* Helper Functions */
+        function showError(box, element, message) {
+            element.textContent = message;
+            box.classList.remove('hidden');
+            box.classList.add('error');
+        }
+
+        function showSuccess(box, element, message) {
+            element.textContent = message;
+            box.classList.remove('hidden');
+            box.classList.remove('error');
         }
     </script>
 </body>
