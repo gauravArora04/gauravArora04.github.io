@@ -349,6 +349,79 @@
       font-size: 1.5rem; color: var(--maroon); line-height: 1.7;
     }
 
+    /* ════════ LOCATIONS ════════ */
+    .locations-section {
+      background:
+        radial-gradient(ellipse at 15% 50%, rgba(232,130,26,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 50%, rgba(192,65,93,0.10) 0%, transparent 50%),
+        linear-gradient(180deg, #fef9f0 0%, #fdf4e3 100%);
+      flex-direction: column; gap: 4rem;
+    }
+    .locations-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 300; font-style: italic;
+      color: var(--maroon); text-align: center; line-height: 1.1;
+    }
+    .locations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2.5rem; width: 100%; max-width: 900px;
+    }
+    .location-card {
+      background: white;
+      border-radius: 2px;
+      overflow: hidden;
+      box-shadow: 0 4px 40px rgba(139,26,46,0.08);
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .location-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 60px rgba(139,26,46,0.14);
+    }
+    .location-card-bar { height: 5px; }
+    .loc-groom .location-card-bar { background: linear-gradient(90deg, #f4a832, #e8821a); }
+    .loc-bride .location-card-bar { background: linear-gradient(90deg, #c0415d, #8b1a2e); }
+
+    .map-frame {
+      width: 100%; height: 220px;
+      border: none; display: block;
+      filter: sepia(0.15) saturate(1.1);
+    }
+
+    .location-card-body { padding: 1.6rem 1.8rem 2rem; }
+    .location-who {
+      font-size: 0.55rem; letter-spacing: 0.5em;
+      text-transform: uppercase; margin-bottom: 0.4rem;
+    }
+    .loc-groom .location-who { color: var(--saffron); }
+    .loc-bride .location-who  { color: var(--rose); }
+
+    .location-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem; font-weight: 400; font-style: italic;
+      color: var(--maroon); margin-bottom: 1rem; line-height: 1.2;
+    }
+    .location-detail { display: flex; align-items: flex-start; gap: 0.7rem; margin-bottom: 0.6rem; }
+    .ldi { color: var(--saffron); font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+    .ldt { font-size: 0.76rem; color: var(--muted); line-height: 1.6; letter-spacing: 0.03em; }
+    .location-divider { height: 1px; background: linear-gradient(to right, var(--marigold), transparent); margin: 1rem 0; opacity: 0.35; }
+
+    .btn-directions {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      margin-top: 0.8rem;
+      font-family: 'Josefin Sans', sans-serif;
+      font-size: 0.6rem; letter-spacing: 0.4em; text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.65rem 1.4rem;
+      border: 1.5px solid;
+      transition: background 0.3s, color 0.3s;
+    }
+    .loc-groom .btn-directions { color: var(--saffron); border-color: var(--saffron); }
+    .loc-groom .btn-directions:hover { background: var(--saffron); color: white; }
+    .loc-bride  .btn-directions { color: var(--rose); border-color: var(--rose); }
+    .loc-bride  .btn-directions:hover { background: var(--rose); color: white; }
+
     /* ════════ FOOTER ════════ */
     footer {
       background: linear-gradient(160deg, #3d1a0a, #5a2410);
@@ -574,6 +647,125 @@
   </div>
 </section>
 
+<!-- ══ LOCATIONS ══ -->
+<section class="locations-section" id="locations">
+  <div style="width:100%; max-width:900px; display:flex; flex-direction:column; align-items:center; gap:3.5rem;">
+
+    <div style="text-align:center;">
+      <p class="section-label reveal" data-delay="1">Come Find Us</p>
+      <h2 class="locations-title reveal" data-delay="2">Where It All Happens</h2>
+    </div>
+
+    <div class="locations-grid">
+
+      <!-- ── GROOM'S HOUSE ── -->
+      <div class="location-card loc-groom reveal" data-delay="2">
+        <div class="location-card-bar"></div>
+
+        <!--
+        ╔══════════════════════════════════════════════════════════╗
+        ║  GROOM'S HOUSE MAP — update the src URL below           ║
+        ║                                                          ║
+        ║  How to get your embed URL:                             ║
+        ║  1. Open Google Maps → search your address             ║
+        ║  2. Click Share → Embed a map → Copy HTML              ║
+        ║  3. Paste only the src="..." URL from that iframe here  ║
+        ║                                                          ║
+        ║  OR use coordinates directly:                           ║
+        ║  Replace LAT and LNG below with your lat/lng            ║
+        ║  e.g. 30.9010 and 76.8573 for Ludhiana                 ║
+        ╚══════════════════════════════════════════════════════════╝
+        -->
+        <iframe
+          class="map-frame"
+          src="https://maps.google.com/maps?q=30.35827172485419, 76.78973785463236&z=16&output=embed"
+          allowfullscreen="" loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+
+        <div class="location-card-body">
+          <div class="location-who">Groom's Residence</div>
+          <div class="location-name">Gaurav's Family Home</div>
+          <div class="location-detail">
+            <span class="ldi">📍</span>
+            <!-- UPDATE: Replace with the actual street address -->
+            <span class="ldt">House No. 38, Street Number 10, New Laxmi Nagar,<br>Ambala City, Haryana — 134 003</span>
+          </div>
+          <div class="location-detail">
+            <span class="ldi">🗓</span>
+            <span class="ldt">Sagan &amp; Engagement — Friday, June 19<br>DJ Night &amp; Mehndi — June 21</span>
+          </div>
+          <div class="location-detail">
+            <span class="ldi">📞</span>
+            <!-- UPDATE: Replace with actual contact number -->
+            <span class="ldt">+91 81685 34483</span>
+          </div>
+          <div class="location-divider"></div>
+          <!--
+            UPDATE: Replace LAT and LNG in the href below with actual coordinates
+            Example: https://www.google.com/maps/dir/?api=1&destination=30.9010,76.8573
+          -->
+          <a class="btn-directions"
+             href="https://www.google.com/maps/dir/?api=1&destination=30.35827172485419, 76.78973785463236"
+             target="_blank" rel="noopener">
+            🗺 Get Directions
+          </a>
+        </div>
+      </div>
+
+      <!-- ── BRIDE'S HOUSE ── -->
+      <div class="location-card loc-bride reveal" data-delay="3">
+        <div class="location-card-bar"></div>
+
+        <!--
+        ╔══════════════════════════════════════════════════════════╗
+        ║  BRIDE'S HOUSE MAP — update the src URL below           ║
+        ║                                                          ║
+        ║  Same steps as above — get embed src from Google Maps   ║
+        ║  OR replace LAT and LNG with bride's coordinates        ║
+        ║  e.g. 30.9010 and 75.8573 for Ludhiana area            ║
+        ╚══════════════════════════════════════════════════════════╝
+        -->
+        <iframe
+          class="map-frame"
+          src="https://maps.google.com/maps?q=30.880236653500106, 75.83367242270783&z=16&output=embed"
+          allowfullscreen="" loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+
+        <div class="location-card-body">
+          <div class="location-who">Bride's Residence</div>
+          <div class="location-name">Prerna's Family Home</div>
+          <!-- <div class="location-detail">
+            <span class="ldi">📍</span>
+            <-- UPDATE: Replace with the actual street address --
+            <span class="ldt">House No. XX, Street Name,<br>Ludhiana, Punjab — 141 XXX</span>
+          </div> -->
+          <div class="location-detail">
+            <span class="ldi">🗓</span>
+            <span class="ldt">DJ Night &amp; Mehndi — June 21<br>Baarat &amp; Shadi — Monday, June 22</span>
+          </div>
+          <div class="location-detail">
+            <span class="ldi">📞</span>
+            <!-- UPDATE: Replace with actual contact number -->
+            <span class="ldt">+91 98559 76262</span>
+          </div>
+          <div class="location-divider"></div>
+          <!--
+            UPDATE: Replace LAT and LNG in the href below with actual coordinates
+          -->
+          <a class="btn-directions"
+             href="https://www.google.com/maps/dir/?api=1&destination=30.880236653500106, 75.83367242270783"
+             target="_blank" rel="noopener">
+            🗺 Get Directions
+          </a>
+        </div>
+      </div>
+
+    </div><!-- /locations-grid -->
+  </div>
+</section>
+
 <!-- ══ RSVP ══ -->
 <section class="rsvp-section" id="rsvp">
   <h2 class="rsvp-heading reveal">RSVP</h2>
@@ -747,7 +939,7 @@
     btn.textContent = 'Bhej rahe hain…';
     btn.disabled = true;
 
-    const FORMSPREE_URL = 'https://formspree.io/f/YOUR_FORM_ID';
+    const FORMSPREE_URL = 'https://formspree.io/f/xojykykb';
     if (FORMSPREE_URL.includes('YOUR_FORM_ID')) {
       await new Promise(r => setTimeout(r, 900)); // demo mode
     } else {
