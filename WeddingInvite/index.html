@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Priya weds Arjun 🌸</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Josefin+Sans:wght@200;300;400&family=Noto+Serif+Devanagari:wght@300;400&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:    #fdf6ec;
+      --warm:     #fef0d8;
+      --saffron:  #e8821a;
+      --marigold: #f4a832;
+      --rose:     #c0415d;
+      --blush:    #f2a8bc;
+      --maroon:   #8b1a2e;
+      --gold:     #c9922a;
+      --deep:     #3d1a0a;
+      --text:     #2e1a0e;
+      --muted:    #7a5840;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--cream);
+      color: var(--text);
+      font-family: 'Josefin Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── Custom Cursor ── */
+    .cursor {
+      width: 10px; height: 10px;
+      background: var(--rose);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: multiply;
+      transition: transform 0.1s ease;
+    }
+    .cursor-ring {
+      width: 38px; height: 38px;
+      border: 1.5px solid var(--marigold);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.4s cubic-bezier(0.23,1,0.32,1);
+    }
+
+    /* ════════ HERO ════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+      text-align: center; padding: 3rem 2rem;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(244,168,50,0.28) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 80%, rgba(192,65,93,0.2) 0%, transparent 50%),
+        linear-gradient(160deg, #fef6e8 0%, #fdf0d5 50%, #fce8d0 100%);
+    }
+
+    .mandala {
+      position: absolute;
+      width: min(600px, 90vw); height: min(600px, 90vw);
+      opacity: 0.07;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: spin 80s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    .petal {
+      position: absolute;
+      border-radius: 50% 10% 50% 10%;
+      opacity: 0;
+      animation: fall linear infinite;
+      pointer-events: none;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-8vh) rotate(0deg) scale(1); opacity: 0; }
+      8%   { opacity: 0.7; }
+      92%  { opacity: 0.3; }
+      100% { transform: translateY(108vh) rotate(540deg) scale(0.6); opacity: 0; }
+    }
+
+    .corner { position: absolute; width: 90px; height: 90px; opacity: 0.4; pointer-events: none; }
+    .corner svg { width: 100%; height: 100%; }
+    .corner-tl { top: 1.2rem; left: 1.2rem; }
+    .corner-tr { top: 1.2rem; right: 1.2rem; transform: scaleX(-1); }
+    .corner-bl { bottom: 1.2rem; left: 1.2rem; transform: scaleY(-1); }
+    .corner-br { bottom: 1.2rem; right: 1.2rem; transform: scale(-1,-1); }
+
+    .hero-om {
+      font-size: 2.2rem; color: var(--saffron); margin-bottom: 0.6rem;
+      opacity: 0; animation: fadeUp 1s ease 0.2s forwards; position: relative;
+    }
+    .hero-eyebrow {
+      font-size: clamp(0.55rem, 1.4vw, 0.7rem);
+      letter-spacing: 0.55em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 1.8rem;
+      opacity: 0; animation: fadeUp 1.2s ease 0.4s forwards; position: relative;
+    }
+    .hero-names {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300; font-style: italic;
+      font-size: clamp(3.2rem, 9vw, 7.5rem);
+      line-height: 0.92; color: var(--maroon);
+      opacity: 0; animation: fadeUp 1.4s ease 0.6s forwards; position: relative;
+    }
+    .hero-names span { display: block; color: var(--rose); }
+    .hero-ampersand {
+      font-size: clamp(1.8rem, 5vw, 4.5rem);
+      color: var(--saffron); display: block;
+      font-weight: 300; font-style: normal; margin: 0.12em 0;
+    }
+    .hero-divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 2rem auto;
+      opacity: 0; animation: fadeUp 1s ease 1s forwards; position: relative;
+    }
+    .hdl { width: 70px; height: 1px; background: linear-gradient(to right, transparent, var(--gold)); }
+    .hdl:last-child { background: linear-gradient(to left, transparent, var(--gold)); }
+    .hdd { width: 8px; height: 8px; background: var(--marigold); transform: rotate(45deg); }
+
+    .hero-date {
+      font-size: clamp(0.65rem, 1.7vw, 0.85rem);
+      letter-spacing: 0.45em; color: var(--muted);
+      opacity: 0; animation: fadeUp 1s ease 1.2s forwards; position: relative;
+    }
+    .hero-devanagari {
+      font-family: 'Noto Serif Devanagari', serif;
+      font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+      color: var(--saffron); margin-top: 1rem;
+      opacity: 0; animation: fadeUp 1s ease 1.4s forwards; position: relative;
+    }
+    .scroll-hint {
+      position: absolute; bottom: 2.5rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0; animation: fadeUp 1s ease 2.2s forwards;
+    }
+    .scroll-hint span { font-size: 0.55rem; letter-spacing: 0.45em; color: var(--muted); text-transform: uppercase; }
+    .scroll-arrow {
+      width: 18px; height: 18px;
+      border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold);
+      transform: rotate(45deg); animation: bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%,100% { transform: rotate(45deg) translateY(0); }
+      50%      { transform: rotate(45deg) translateY(6px); }
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(28px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    /* ════════ SHARED ════════ */
+    section {
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center;
+      padding: 6rem 2rem; position: relative;
+    }
+    .reveal {
+      opacity: 0; transform: translateY(55px);
+      transition: opacity 0.85s cubic-bezier(0.23,1,0.32,1),
+                  transform 0.85s cubic-bezier(0.23,1,0.32,1);
+    }
+    .reveal.visible { opacity:1; transform: translateY(0); }
+    .reveal.hidden  { opacity:0; transform: translateY(-35px); }
+    .reveal[data-delay="1"] { transition-delay: 0.08s; }
+    .reveal[data-delay="2"] { transition-delay: 0.18s; }
+    .reveal[data-delay="3"] { transition-delay: 0.30s; }
+    .reveal[data-delay="4"] { transition-delay: 0.45s; }
+    .reveal[data-delay="5"] { transition-delay: 0.60s; }
+
+    .section-label {
+      font-size: 0.58rem; letter-spacing: 0.55em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 1.2rem;
+    }
+
+    /* ════════ EVENTS ════════ */
+    .events-section {
+      background:
+        radial-gradient(ellipse at 80% 10%, rgba(244,168,50,0.18) 0%, transparent 45%),
+        linear-gradient(180deg, #fef8ee 0%, #fdf3e0 100%);
+      flex-direction: column; gap: 4rem;
+    }
+    .events-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 300; font-style: italic;
+      color: var(--maroon); text-align: center; line-height: 1.1;
+    }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem; width: 100%; max-width: 1000px;
+    }
+    .event-card {
+      background: white; border-radius: 2px;
+      overflow: hidden;
+      box-shadow: 0 4px 40px rgba(139,26,46,0.07);
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .event-card:hover { transform: translateY(-6px); box-shadow: 0 16px 60px rgba(139,26,46,0.13); }
+    .event-card-top { height: 6px; }
+    .card-sagan  .event-card-top { background: linear-gradient(90deg, #f4a832, #e8821a); }
+    .card-mehndi .event-card-top { background: linear-gradient(90deg, #5d9e5a, #3a7d44); }
+    .card-shadi  .event-card-top { background: linear-gradient(90deg, #c0415d, #8b1a2e); }
+    .event-card-body { padding: 2.2rem 2rem 2rem; }
+    .event-icon { font-size: 2.2rem; margin-bottom: 0.8rem; display: block; }
+    .event-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.65rem; font-weight: 400; font-style: italic;
+      color: var(--maroon); margin-bottom: 0.25rem; line-height: 1.2;
+    }
+    .event-subtitle { font-size: 0.58rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.2rem; }
+    .event-divider { height: 1px; background: linear-gradient(to right, var(--marigold), transparent); margin: 1.2rem 0; opacity: 0.4; }
+    .event-detail { display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.7rem; }
+    .edi { color: var(--saffron); font-size: 0.9rem; flex-shrink: 0; margin-top: 2px; }
+    .edt { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.04em; line-height: 1.6; }
+    .event-note { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.95rem; color: var(--rose); line-height: 1.5; }
+
+    /* ════════ DATE ════════ */
+    .date-section {
+      background:
+        radial-gradient(ellipse at 20% 80%, rgba(192,65,93,0.14) 0%, transparent 50%),
+        linear-gradient(160deg, #fdf0d8 0%, #fce8cc 100%);
+    }
+    .date-inner { text-align: center; width: 100%; max-width: 700px; }
+    .date-ornament { font-size: 1.4rem; color: var(--saffron); letter-spacing: 0.5em; margin-bottom: 0.5rem; }
+    .date-big {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(5rem, 18vw, 12rem);
+      font-weight: 300; line-height: 0.85;
+      color: var(--maroon); letter-spacing: -0.02em;
+    }
+    .date-month-year {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.4rem, 4vw, 2.5rem);
+      font-weight: 300; font-style: italic;
+      color: var(--saffron); margin-top: 1rem; letter-spacing: 0.15em;
+    }
+    .date-location { font-size: 0.65rem; letter-spacing: 0.5em; text-transform: uppercase; color: var(--muted); margin-top: 1rem; }
+    .date-strip {
+      display: flex; align-items: center; justify-content: center;
+      gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap;
+    }
+    .date-pill {
+      background: white; border: 1px solid rgba(201,146,42,0.25);
+      border-radius: 2px; padding: 0.7rem 1.2rem;
+      font-size: 0.58rem; letter-spacing: 0.35em;
+      text-transform: uppercase; color: var(--maroon);
+    }
+
+    /* ════════ RSVP ════════ */
+    .rsvp-section {
+      background:
+        radial-gradient(ellipse at 70% 30%, rgba(244,168,50,0.14) 0%, transparent 50%),
+        linear-gradient(180deg, #fff8f0 0%, #fef3e4 100%);
+      flex-direction: column; gap: 2.5rem;
+    }
+    .rsvp-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 300; font-style: italic;
+      text-align: center; color: var(--maroon); line-height: 1;
+    }
+    .rsvp-sub { font-size: 0.62rem; letter-spacing: 0.5em; text-transform: uppercase; color: var(--gold); text-align: center; }
+    .rsvp-form { width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: 1.3rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field label { font-size: 0.58rem; letter-spacing: 0.45em; text-transform: uppercase; color: var(--saffron); }
+    .field input, .field select, .field textarea {
+      background: transparent;
+      border: none; border-bottom: 1.5px solid rgba(201,146,42,0.3);
+      padding: 0.75rem 0; color: var(--text);
+      font-family: 'Josefin Sans', sans-serif; font-weight: 300;
+      font-size: 0.88rem; letter-spacing: 0.04em;
+      outline: none; transition: border-color 0.3s; width: 100%;
+      -webkit-appearance: none;
+    }
+    .field input::placeholder, .field textarea::placeholder { color: rgba(122,88,64,0.4); }
+    .field select option { background: #fff8f0; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-bottom-color: var(--rose); }
+    .field textarea { resize: none; height: 70px; }
+
+    .check-group { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.2rem; }
+    .check-label {
+      display: flex; align-items: center; gap: 0.7rem;
+      cursor: pointer; font-size: 0.8rem; letter-spacing: 0.06em;
+      color: var(--muted); transition: color 0.25s;
+    }
+    .check-label input[type="checkbox"] { display: none; }
+    .check-box {
+      width: 16px; height: 16px;
+      border: 1.5px solid rgba(201,146,42,0.4);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.25s, background 0.25s; font-size: 0.7rem;
+    }
+    .check-label input:checked ~ .check-box { background: var(--rose); border-color: var(--rose); }
+    .check-label input:checked ~ .check-box::after { content: '✓'; color: white; }
+    .check-label:has(input:checked) { color: var(--maroon); }
+
+    .radio-group { display: flex; gap: 1.5rem; margin-top: 0.2rem; }
+    .radio-label {
+      display: flex; align-items: center; gap: 0.6rem;
+      cursor: pointer; font-size: 0.8rem; letter-spacing: 0.06em;
+      color: var(--muted); transition: color 0.25s;
+    }
+    .radio-label input[type="radio"] { display: none; }
+    .radio-dot {
+      width: 14px; height: 14px;
+      border: 1.5px solid rgba(201,146,42,0.4);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: border-color 0.25s;
+    }
+    .radio-label input:checked ~ .radio-dot { border-color: var(--rose); }
+    .radio-label input:checked ~ .radio-dot::after { content:''; width:6px; height:6px; background:var(--rose); border-radius:50%; }
+    .radio-label:has(input:checked) { color: var(--maroon); }
+
+    .btn-submit {
+      margin-top: 0.5rem; background: transparent;
+      border: 1.5px solid var(--rose); color: var(--rose);
+      padding: 1rem 3rem;
+      font-family: 'Josefin Sans', sans-serif;
+      font-size: 0.65rem; letter-spacing: 0.5em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.3s, color 0.3s; align-self: center;
+    }
+    .btn-submit:hover { background: var(--rose); color: white; }
+
+    .form-success { display: none; text-align: center; }
+    .form-success-inner {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 1.5rem; color: var(--maroon); line-height: 1.7;
+    }
+
+    /* ════════ FOOTER ════════ */
+    footer {
+      background: linear-gradient(160deg, #3d1a0a, #5a2410);
+      padding: 5rem 2rem 3.5rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .footer-pattern {
+      position: absolute; inset: 0; opacity: 0.04;
+      background-image: repeating-linear-gradient(45deg, var(--marigold) 0px, var(--marigold) 1px, transparent 1px, transparent 20px);
+    }
+    .footer-monogram {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 8vw, 5rem); font-weight: 300; font-style: italic;
+      color: var(--marigold); letter-spacing: 0.15em; position: relative;
+    }
+    .footer-hearts { color: var(--blush); font-size: 1rem; letter-spacing: 0.5rem; margin: 0.5rem 0 1rem; position: relative; }
+    .footer-note { font-size: 0.62rem; letter-spacing: 0.3em; color: rgba(253,246,236,0.4); position: relative; }
+
+    .footer-maamu {
+      margin-top: 2.5rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1rem, 2.8vw, 1.5rem); font-style: italic;
+      color: var(--blush); letter-spacing: 0.06em; line-height: 1.6;
+      position: relative; padding: 1.5rem 2rem;
+      border-top: 1px solid rgba(244,168,50,0.25);
+      border-bottom: 1px solid rgba(244,168,50,0.25);
+      max-width: 640px; margin-left: auto; margin-right: auto;
+    }
+    .footer-maamu .qdot {
+      display: block; font-size: 2rem; color: var(--marigold);
+      opacity: 0.45; margin-bottom: 0.2rem; font-style: normal;
+    }
+
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1000; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 128px;
+    }
+
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+      .events-grid { grid-template-columns: 1fr; }
+      .corner { width: 60px; height: 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- ══ HERO ══ -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+
+  <svg class="mandala" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="200" cy="200" r="190" stroke="#c9922a" stroke-width="0.5"/>
+    <circle cx="200" cy="200" r="155" stroke="#c9922a" stroke-width="0.5"/>
+    <circle cx="200" cy="200" r="118" stroke="#c9922a" stroke-width="0.5"/>
+    <circle cx="200" cy="200" r="78"  stroke="#c9922a" stroke-width="0.5"/>
+    <circle cx="200" cy="200" r="38"  stroke="#c9922a" stroke-width="1"/>
+    <line x1="200" y1="10"  x2="200" y2="390" stroke="#c9922a" stroke-width="0.5"/>
+    <line x1="10"  y1="200" x2="390" y2="200" stroke="#c9922a" stroke-width="0.5"/>
+    <line x1="55"  y1="55"  x2="345" y2="345" stroke="#c9922a" stroke-width="0.5"/>
+    <line x1="345" y1="55"  x2="55"  y2="345" stroke="#c9922a" stroke-width="0.5"/>
+    <line x1="10"  y1="130" x2="390" y2="130" stroke="#c9922a" stroke-width="0.3"/>
+    <line x1="10"  y1="270" x2="390" y2="270" stroke="#c9922a" stroke-width="0.3"/>
+    <line x1="130" y1="10"  x2="130" y2="390" stroke="#c9922a" stroke-width="0.3"/>
+    <line x1="270" y1="10"  x2="270" y2="390" stroke="#c9922a" stroke-width="0.3"/>
+    <ellipse cx="200" cy="140" rx="12" ry="22" fill="#c9922a" opacity="0.5"/>
+    <ellipse cx="200" cy="260" rx="12" ry="22" fill="#c9922a" opacity="0.5"/>
+    <ellipse cx="140" cy="200" rx="22" ry="12" fill="#c9922a" opacity="0.5"/>
+    <ellipse cx="260" cy="200" rx="22" ry="12" fill="#c9922a" opacity="0.5"/>
+    <ellipse cx="159" cy="159" rx="12" ry="22" transform="rotate(-45 159 159)" fill="#c9922a" opacity="0.35"/>
+    <ellipse cx="241" cy="159" rx="12" ry="22" transform="rotate(45 241 159)"  fill="#c9922a" opacity="0.35"/>
+    <ellipse cx="159" cy="241" rx="12" ry="22" transform="rotate(45 159 241)"  fill="#c9922a" opacity="0.35"/>
+    <ellipse cx="241" cy="241" rx="12" ry="22" transform="rotate(-45 241 241)" fill="#c9922a" opacity="0.35"/>
+  </svg>
+
+  <!-- Corner flourishes -->
+  <div class="corner corner-tl"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5 L5 60 Q5 95 40 95 L95 95" stroke="#c9922a" stroke-width="1" fill="none"/><path d="M5 5 L30 5" stroke="#c9922a" stroke-width="2"/><path d="M5 5 L5 30" stroke="#c9922a" stroke-width="2"/><circle cx="5" cy="5" r="4" fill="#e8821a"/><circle cx="30" cy="5" r="2" fill="#c9922a" opacity="0.5"/><circle cx="5" cy="30" r="2" fill="#c9922a" opacity="0.5"/></svg></div>
+  <div class="corner corner-tr"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5 L5 60 Q5 95 40 95 L95 95" stroke="#c9922a" stroke-width="1" fill="none"/><path d="M5 5 L30 5" stroke="#c9922a" stroke-width="2"/><path d="M5 5 L5 30" stroke="#c9922a" stroke-width="2"/><circle cx="5" cy="5" r="4" fill="#e8821a"/><circle cx="30" cy="5" r="2" fill="#c9922a" opacity="0.5"/><circle cx="5" cy="30" r="2" fill="#c9922a" opacity="0.5"/></svg></div>
+  <div class="corner corner-bl"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5 L5 60 Q5 95 40 95 L95 95" stroke="#c9922a" stroke-width="1" fill="none"/><path d="M5 5 L30 5" stroke="#c9922a" stroke-width="2"/><path d="M5 5 L5 30" stroke="#c9922a" stroke-width="2"/><circle cx="5" cy="5" r="4" fill="#e8821a"/><circle cx="30" cy="5" r="2" fill="#c9922a" opacity="0.5"/><circle cx="5" cy="30" r="2" fill="#c9922a" opacity="0.5"/></svg></div>
+  <div class="corner corner-br"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5 L5 60 Q5 95 40 95 L95 95" stroke="#c9922a" stroke-width="1" fill="none"/><path d="M5 5 L30 5" stroke="#c9922a" stroke-width="2"/><path d="M5 5 L5 30" stroke="#c9922a" stroke-width="2"/><circle cx="5" cy="5" r="4" fill="#e8821a"/><circle cx="30" cy="5" r="2" fill="#c9922a" opacity="0.5"/><circle cx="5" cy="30" r="2" fill="#c9922a" opacity="0.5"/></svg></div>
+
+  <div id="petals"></div>
+
+  <p class="hero-om">ॐ</p>
+  <p class="hero-eyebrow">With the blessings of our families · you are lovingly invited to the wedding of</p>
+
+  <h1 class="hero-names">
+    Gaurav
+    <span class="hero-ampersand">&amp;</span>
+    <span>Prerna</span>
+  </h1>
+
+  <div class="hero-divider">
+    <div class="hdl"></div>
+    <div class="hdd"></div>
+    <div class="hdl"></div>
+  </div>
+
+  <p class="hero-date">June &nbsp;·&nbsp; 19–22 &nbsp;·&nbsp; 2026 &nbsp;&nbsp;·&nbsp;&nbsp; Ambala and Ludhiana</p>
+  <p class="hero-devanagari">विवाह उत्सव में आपका हार्दिक स्वागत है 🌸</p>
+
+  <!-- <div class="scroll-hint">
+    <span>Scroll to explore</span>
+    <div class="scroll-arrow"></div>
+  </div> -->
+</section>
+
+<!-- ══ EVENTS ══ -->
+<section class="events-section" id="events">
+  <div style="width:100%; max-width:1040px; display:flex; flex-direction:column; align-items:center; gap:3.5rem;">
+    <div style="text-align:center;">
+      <p class="section-label reveal" data-delay="1">Four Days of Joy &amp; Celebration</p>
+      <h2 class="events-title reveal" data-delay="2">The Wedding Festivities</h2>
+    </div>
+
+    <div class="events-grid">
+
+      <!-- SAGAN & ENGAGEMENT -->
+      <div class="event-card card-sagan reveal" data-delay="2">
+        <div class="event-card-top"></div>
+        <div class="event-card-body">
+          <span class="event-icon">💍</span>
+          <div class="event-name">Sagan &amp;<br>Engagement</div>
+          <div class="event-subtitle">Friday, June 19</div>
+          <div class="event-divider"></div>
+          <div class="event-detail">
+            <span class="edi">🕚</span>
+            <span class="edt">11:00 AM — Sagan Ceremony<br>Tilak, blessings &amp; family rituals</span>
+          </div>
+          <div class="event-detail">
+            <span class="edi">🌆</span>
+            <span class="edt">03:00 PM — Ring Ceremony</span>
+          </div>
+          <div class="event-detail">
+            <span class="edi">📍</span>
+            <span class="edt">Ambala, Haryana</span>
+          </div>
+          <div class="event-divider"></div>
+          <p class="event-note">The sweetest beginning — blessings from elders, exchange of rings &amp; the first celebration of two families becoming one.</p>
+        </div>
+      </div>
+
+      <!-- DJ NIGHT & MEHNDI -->
+      <div class="event-card card-mehndi reveal" data-delay="3">
+        <div class="event-card-top"></div>
+        <div class="event-card-body">
+          <span class="event-icon">🎶</span>
+          <div class="event-name">DJ Night &amp;<br>Mehndi</div>
+          <div class="event-subtitle">June 21</div>
+          <div class="event-divider"></div>
+          <div class="event-detail">
+            <span class="edi">🪩</span>
+            <span class="edt">Sunday 21st — DJ Night<br>07:00 PM onwards</span>
+          </div>
+          <div class="event-detail">
+            <span class="edi">🌿</span>
+            <span class="edt">Sunday 21st — Mehndi &amp; Sangeet<br>10:00 PM — Live music, henna &amp; dhol</span>
+          </div>
+          <div class="event-detail">
+            <span class="edi">📍</span>
+            <span class="edt">Ambala, Haryana</span>
+          </div>
+          <div class="event-divider"></div>
+          <p class="event-note">Dance until you can't &amp; let your hands bloom with henna — two unforgettable evenings before the big day.</p>
+        </div>
+      </div>
+
+      <!-- BAARAT & SHADI -->
+      <div class="event-card card-shadi reveal" data-delay="4">
+        <div class="event-card-top"></div>
+        <div class="event-card-body">
+          <span class="event-icon">🌸</span>
+          <div class="event-name">Baarat &amp;<br>Shadi</div>
+          <div class="event-subtitle">The Big Day · Monday, June 22</div>
+          <div class="event-divider"></div>
+          <div class="event-detail">
+            <span class="edi">🐎</span>
+            <span class="edt">05:00 PM — Baarat Procession<br>Dhol, dancing &amp; the groom arrives in style</span>
+          </div>
+          <div class="event-detail">
+            <span class="edi">🔥</span>
+            <span class="edt">07:00 PM — Wedding Ceremony (Phere)<br>Sacred vows under the starlit sky</span>
+          </div>
+          <div class="event-detail">
+            <span class="edi">🍽</span>
+            <span class="edt">09:30 PM — Grand Reception &amp; Dinner</span>
+          </div>
+          <div class="event-detail">
+            <span class="edi">📍</span>
+            <span class="edt">Ludhiana, Punjab</span>
+          </div>
+          <div class="event-divider"></div>
+          <p class="event-note">The grandest evening of all — join us as two souls and two families unite forever beneath the Rajasthani sky. 🌙</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══ DATE ══ -->
+<section class="date-section" id="date">
+  <div class="date-inner">
+    <p class="section-label reveal" data-delay="1">Save the Date</p>
+    <div class="date-ornament reveal" data-delay="1">✦ &nbsp; ✦ &nbsp; ✦</div>
+    <div class="date-big reveal" data-delay="2">19-22</div>
+    <div class="date-month-year reveal" data-delay="3">June, Two Thousand &amp; Twenty-Six</div>
+    <p class="date-location reveal" data-delay="4">Jaipur &nbsp;·&nbsp; Rajasthan &nbsp;·&nbsp; India</p>
+    <div class="date-strip reveal" data-delay="5">
+      <div class="date-pill">Sagan — June 19</div>
+      <div class="date-pill">DJ Night — June 21</div>
+      <div class="date-pill">Mehndi — June 21</div>
+      <div class="date-pill">Shadi — June 22</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ RSVP ══ -->
+<section class="rsvp-section" id="rsvp">
+  <h2 class="rsvp-heading reveal">RSVP</h2>
+  <p class="rsvp-sub reveal" data-delay="1">Kindly respond by 18th June 2026</p>
+
+  <!--
+    ╔═══════════════════════════════════════╗
+    ║  RSVP SETUP — read before deploying  ║
+    ╠═══════════════════════════════════════╣
+    ║  1. Go to formspree.io → sign up     ║
+    ║  2. Create a form → copy Form ID     ║
+    ║  3. Replace YOUR_FORM_ID below       ║
+    ║  → Responses go to YOUR email only   ║
+    ╚═══════════════════════════════════════╝
+  -->
+
+  <form class="rsvp-form reveal" id="rsvpForm" data-delay="2">
+    <div class="form-row">
+      <div class="field">
+        <label>First Name</label>
+        <input type="text" name="firstName" placeholder="Rahul" required />
+      </div>
+      <div class="field">
+        <label>Last Name</label>
+        <input type="text" name="lastName" placeholder="Sharma" required />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" name="email" placeholder="you@example.com" required />
+    </div>
+
+    <div class="field">
+      <label>Phone (optional)</label>
+      <input type="tel" name="phone" placeholder="+91 98765 43210" />
+    </div>
+
+    <div class="field">
+      <label>Will you attend?</label>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="attendance" value="yes" required />
+          <div class="radio-dot"></div>
+          Bilkul Aayenge! 🎉
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="attendance" value="no" />
+          <div class="radio-dot"></div>
+          Sorry, Can't Make It
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Which Events Will You Attend?</label>
+      <div class="check-group">
+        <label class="check-label"><input type="checkbox" name="events" value="sagan" /><div class="check-box"></div>💍 Sagan &amp; Engagement (June 19)</label>
+        <label class="check-label"><input type="checkbox" name="events" value="dj" /><div class="check-box"></div>🪩 DJ Night (June 21)</label>
+        <label class="check-label"><input type="checkbox" name="events" value="mehndi" /><div class="check-box"></div>🌿 Mehndi &amp; Sangeet (June 21)</label>
+        <label class="check-label"><input type="checkbox" name="events" value="shadi" /><div class="check-box"></div>🌸 Baarat &amp; Shadi (June 22)</label>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="field">
+        <label>Number of Guests</label>
+        <select name="guests">
+          <option value="1">1 — Sirf Main</option>
+          <option value="2">2 — Plus One</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5+">5+ — Poori Family! 🎊</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dietary Preference</label>
+        <select name="dietary">
+          <option value="veg">Vegetarian 🥦</option>
+          <option value="nonveg">Non-Vegetarian 🍗</option>
+          <option value="jain">Jain Food</option>
+          <option value="any">Kuch bhi chalega!</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>A Message for the Couple</label>
+      <textarea name="message" placeholder="Apna pyaar aur aashirwad bhejo… ❤️"></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit">Send RSVP &nbsp;🌸</button>
+  </form>
+
+  <div class="form-success" id="formSuccess">
+    <div class="form-success-inner">
+      Shukriya! Bahut bahut dhanyavaad. 🌸<br>
+      We can't wait to celebrate with you!
+    </div>
+    <p class="section-label" style="margin-top:1rem;">आपका इंतज़ार रहेगा</p>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-pattern"></div>
+  <div class="footer-monogram">P &amp; A</div>
+  <div class="footer-hearts">♥ &nbsp; ♥ &nbsp; ♥</div>
+  <p class="footer-note">19-22 June 2026</p>
+  <p class="footer-note" style="margin-top:0.4rem;">With love, laughter &amp; lots of mithai 🍬</p>
+
+  <div class="footer-maamu">
+    <span class="qdot">❝</span>
+    Mele Maamu ki Shaadi me &nbsp;—&nbsp; Jalool Jalool Aana!
+  </div>
+</footer>
+
+<script>
+  /* ── Cursor ── */
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursorRing');
+  document.addEventListener('mousemove', e => {
+    cursor.style.transform = `translate(${e.clientX - 5}px, ${e.clientY - 5}px)`;
+    ring.style.transform   = `translate(${e.clientX - 19}px, ${e.clientY - 19}px)`;
+  });
+
+  /* ── Petals ── */
+  const pc = document.getElementById('petals');
+  const cols = ['#f4a832','#e8821a','#f2c46d','#c0415d','#f9d98a','#e85d75'];
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement('div');
+    p.className = 'petal';
+    const s = Math.random() * 13 + 7;
+    p.style.cssText = `
+      width:${s}px; height:${s*1.7}px;
+      left:${Math.random()*100}%;
+      background:${cols[Math.floor(Math.random()*cols.length)]};
+      animation-duration:${Math.random()*12+10}s;
+      animation-delay:${Math.random()*20}s;
+    `;
+    pc.appendChild(p);
+  }
+
+  /* ── Scroll Reveal ── */
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        entry.target.classList.remove('hidden');
+      } else {
+        const rect = entry.target.getBoundingClientRect();
+        if (rect.top < 0) {
+          entry.target.classList.remove('visible');
+          entry.target.classList.add('hidden');
+        } else {
+          entry.target.classList.remove('visible');
+          entry.target.classList.remove('hidden');
+        }
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+  reveals.forEach(el => obs.observe(el));
+
+  /* ── RSVP ── */
+  const form    = document.getElementById('rsvpForm');
+  const success = document.getElementById('formSuccess');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('.btn-submit');
+    btn.textContent = 'Bhej rahe hain…';
+    btn.disabled = true;
+
+    const FORMSPREE_URL = 'https://formspree.io/f/YOUR_FORM_ID';
+    if (FORMSPREE_URL.includes('YOUR_FORM_ID')) {
+      await new Promise(r => setTimeout(r, 900)); // demo mode
+    } else {
+      try {
+        const res = await fetch(FORMSPREE_URL, {
+          method: 'POST', body: new FormData(form),
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error();
+      } catch {
+        btn.textContent = 'Error — please try again';
+        btn.disabled = false;
+        return;
+      }
+    }
+    form.style.display = 'none';
+    success.style.display = 'block';
+  });
+</script>
+</body>
+</html>
