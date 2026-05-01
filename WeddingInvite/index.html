@@ -30,7 +30,7 @@
       background: var(--cream);
       color: var(--text);
       font-family: 'Josefin Sans', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       overflow-x: hidden;
       cursor: none;
     }
@@ -433,7 +433,7 @@
     }
     .footer-monogram {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 8vw, 5rem); font-weight: 300; font-style: italic;
+      font-size: xx-large; font-weight: 300; font-style: italic;
       color: var(--marigold); letter-spacing: 0.15em; position: relative;
     }
     .footer-hearts { color: var(--blush); font-size: 1rem; letter-spacing: 0.5rem; margin: 0.5rem 0 1rem; position: relative; }
@@ -465,9 +465,162 @@
       .events-grid { grid-template-columns: 1fr; }
       .corner { width: 60px; height: 60px; }
     }
+
+    /* ════════ CURTAINS ════════ */
+
+    /* While curtain is active, pin the page so the hero stays in view */
+    body.curtain-active {
+      overflow: hidden;
+    }
+
+    /* The two curtain panels, side by side, covering the full viewport */
+    #curtain-left,
+    #curtain-right {
+      position: fixed;
+      top: 0; bottom: 0;
+      width: 50%;
+      z-index: 10000;
+      will-change: transform;
+      transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+    }
+    #curtain-left  { left: 0;  background: linear-gradient(105deg, #7a1020 0%, #a01828 40%, #8b1a2e 70%, #6b0f1f 100%); }
+    #curtain-right { right: 0; background: linear-gradient(255deg, #7a1020 0%, #a01828 40%, #8b1a2e 70%, #6b0f1f 100%); }
+
+    /* Subtle fabric fold lines */
+    #curtain-left::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(0,0,0,0.12) 0px, rgba(0,0,0,0) 14px,
+        rgba(255,255,255,0.04) 18px, rgba(0,0,0,0) 32px,
+        rgba(0,0,0,0.08) 36px, rgba(0,0,0,0) 50px
+      );
+    }
+    #curtain-right::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(0,0,0,0) 0px, rgba(0,0,0,0.08) 14px,
+        rgba(0,0,0,0) 18px, rgba(255,255,255,0.04) 32px,
+        rgba(0,0,0,0) 36px, rgba(0,0,0,0.12) 50px
+      );
+    }
+
+    /* Gold trim on inner edges */
+    #curtain-left::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, transparent, #c9922a 15%, #f4d080 50%, #c9922a 85%, transparent);
+      opacity: 0.8;
+    }
+    #curtain-right::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, transparent, #c9922a 15%, #f4d080 50%, #c9922a 85%, transparent);
+      opacity: 0.8;
+    }
+
+    /* Names overlay shown on top of closed curtains */
+    #curtain-nameplate {
+      position: fixed;
+      inset: 0;
+      z-index: 10001;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    #curtain-nameplate .cn-om {
+      font-size: 1.8rem;
+      color: rgba(244,168,50,0.85);
+      margin-bottom: 0.8rem;
+      letter-spacing: 0.05em;
+    }
+    #curtain-nameplate .cn-names {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-style: italic;
+      font-size: clamp(2.8rem, 8vw, 6rem);
+      line-height: 0.95;
+      color: #fdf6ec;
+      text-align: center;
+      text-shadow: 0 2px 30px rgba(0,0,0,0.4);
+      letter-spacing: 0.02em;
+    }
+    #curtain-nameplate .cn-amp {
+      display: block;
+      font-size: clamp(1.4rem, 4vw, 3rem);
+      color: rgba(244,168,50,0.9);
+      font-style: normal;
+      margin: 0.15em 0;
+    }
+    #curtain-nameplate .cn-line {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin: 1.4rem 0 1rem;
+      opacity: 0.5;
+    }
+    #curtain-nameplate .cn-dash {
+      width: 50px; height: 1px;
+      background: linear-gradient(to right, transparent, #f4a832);
+    }
+    #curtain-nameplate .cn-dash:last-child {
+      background: linear-gradient(to left, transparent, #f4a832);
+    }
+    #curtain-nameplate .cn-diamond {
+      width: 6px; height: 6px;
+      background: #f4a832;
+      transform: rotate(45deg);
+    }
+    #curtain-nameplate .cn-hint {
+      font-family: 'Josefin Sans', sans-serif;
+      font-size: 0.5rem;
+      letter-spacing: 0.55em;
+      text-transform: uppercase;
+      color: rgba(253,246,236,0.4);
+      margin-top: 0.5rem;
+      animation: cn-pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes cn-pulse {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 0.9; }
+    }
+
+    /* Slide states — panels slide out to their respective sides */
+    #curtain-left.open  { transform: translateX(-100%); }
+    #curtain-right.open { transform: translateX(100%); }
   </style>
 </head>
 <body>
+
+<!-- ══ CURTAINS ══ -->
+<div id="curtain-left"></div>
+<div id="curtain-right"></div>
+
+<!-- Names shown while curtains are closed -->
+<div id="curtain-nameplate">
+  <p class="cn-om">ॐ</p>
+  <h1 class="cn-names">
+    Gaurav
+    <span class="cn-amp">&amp;</span>
+    <span>Prerna</span>
+  </h1>
+  <div class="cn-line">
+    <div class="cn-dash"></div>
+    <div class="cn-diamond"></div>
+    <div class="cn-dash"></div>
+  </div>
+  <p class="cn-hint">Scroll to open</p>
+</div>
 
 <div class="grain"></div>
 <div class="cursor" id="cursor"></div>
@@ -533,11 +686,28 @@
   </div> -->
 </section>
 
+<!-- ══ DATE ══ -->
+<section class="date-section" id="date">
+  <div class="date-inner">
+    <p class="section-label reveal" data-delay="1">Save the Date</p>
+    <div class="date-ornament reveal" data-delay="1">✦ &nbsp; ✦ &nbsp; ✦</div>
+    <div class="date-big reveal" data-delay="2">19-22</div>
+    <div class="date-month-year reveal" data-delay="3">June, 2026</div>
+    <!-- <p class="date-location reveal" data-delay="4">Ludhiana &nbsp;·&nbsp; Punjab &nbsp;·&nbsp; India</p> -->
+    <div class="date-strip reveal" data-delay="5">
+      <div class="date-pill">Sagan — June 19</div>
+      <div class="date-pill">DJ Night — June 21</div>
+      <div class="date-pill">Mehndi — June 21</div>
+      <div class="date-pill">Shadi — June 22</div>
+    </div>
+  </div>
+</section>
+
 <!-- ══ EVENTS ══ -->
 <section class="events-section" id="events">
   <div style="width:100%; max-width:1040px; display:flex; flex-direction:column; align-items:center; gap:3.5rem;">
     <div style="text-align:center;">
-      <p class="section-label reveal" data-delay="1">Four Days of Joy &amp; Celebration</p>
+      <p class="section-label reveal" data-delay="1">Days of Joy &amp; Celebration</p>
       <h2 class="events-title reveal" data-delay="2">The Wedding Festivities</h2>
     </div>
 
@@ -557,11 +727,11 @@
           </div>
           <div class="event-detail">
             <span class="edi">🌆</span>
-            <span class="edt">03:00 PM — Ring Ceremony</span>
+            <span class="edt">01:00 PM — Ring Ceremony</span>
           </div>
           <div class="event-detail">
             <span class="edi">📍</span>
-            <span class="edt">Ambala, Haryana</span>
+            <span class="edt"><a href="https://www.google.com/maps/dir/?api=1&destination=30.331228560711654, 76.89251167012128" target="_blank">Regenta Marrievilla, Ambala, Haryana</a></span>
           </div>
           <div class="event-divider"></div>
           <p class="event-note">The sweetest beginning — blessings from elders, exchange of rings &amp; the first celebration of two families becoming one.</p>
@@ -586,14 +756,14 @@
           </div>
           <div class="event-detail">
             <span class="edi">📍</span>
-            <span class="edt">Ambala, Haryana</span>
+            <span class="edt"><a href="https://www.google.com/maps/dir/?api=1&destination=30.35827172485419, 76.78973785463236" target="_blank">Arora Residence, Ambala, Haryana</a></span>
           </div>
           <div class="event-detail">
             <span class="edi">📍</span>
-            <span class="edt">Ludhiana, Punjab</span>
+            <span class="edt"><a href="https://www.google.com/maps/dir/?api=1&destination=30.880236653500106, 75.83367242270783" target="_blank">Beri Residence, Ludhiana, Punjab</a></span>
           </div>
           <div class="event-divider"></div>
-          <p class="event-note">Dance until you can't &amp; let your hands bloom with henna — two unforgettable evenings before the big day.</p>
+          <p class="event-note">Dance until you can't &amp; let your hands bloom with henna.</p>
         </div>
       </div>
 
@@ -607,42 +777,25 @@
           <div class="event-divider"></div>
           <div class="event-detail">
             <span class="edi">🐎</span>
-            <span class="edt">05:00 PM — Baarat Procession<br>Dhol, dancing &amp; the groom arrives in style</span>
-          </div>
-          <div class="event-detail">
-            <span class="edi">🔥</span>
-            <span class="edt">07:00 PM — Wedding Ceremony (Phere)<br>Sacred vows under the starlit sky</span>
+            <span class="edt">07:00 PM — Baarat Procession<br>Dhol, dancing &amp; the groom arrives in style</span>
           </div>
           <div class="event-detail">
             <span class="edi">🍽</span>
             <span class="edt">09:30 PM — Grand Reception &amp; Dinner</span>
           </div>
           <div class="event-detail">
+            <span class="edi">🔥</span>
+            <span class="edt">11:00 PM — Wedding Ceremony (Phere)<br>Sacred vows taaron ki chaaon me</span>
+          </div>
+          <div class="event-detail">
             <span class="edi">📍</span>
-            <span class="edt">Ludhiana, Punjab</span>
+            <span class="edt"><a href="https://www.google.com/maps/dir/?api=1&destination=30.850096081271708, 75.79495127116388" target="_blank">Sterling Resort Ludhiana, Ludhiana, Punjab</a></span>
           </div>
           <div class="event-divider"></div>
-          <p class="event-note">The grandest evening of all — join us as two souls and two families unite forever beneath the Rajasthani sky. 🌙</p>
+          <p class="event-note">The grandest evening of all — join us as two souls and two families unite forever. 🌙</p>
         </div>
       </div>
 
-    </div>
-  </div>
-</section>
-
-<!-- ══ DATE ══ -->
-<section class="date-section" id="date">
-  <div class="date-inner">
-    <p class="section-label reveal" data-delay="1">Save the Date</p>
-    <div class="date-ornament reveal" data-delay="1">✦ &nbsp; ✦ &nbsp; ✦</div>
-    <div class="date-big reveal" data-delay="2">19-22</div>
-    <div class="date-month-year reveal" data-delay="3">June, Two Thousand &amp; Twenty-Six</div>
-    <p class="date-location reveal" data-delay="4">Ludhiana &nbsp;·&nbsp; Punjab &nbsp;·&nbsp; India</p>
-    <div class="date-strip reveal" data-delay="5">
-      <div class="date-pill">Sagan — June 19</div>
-      <div class="date-pill">DJ Night — June 21</div>
-      <div class="date-pill">Mehndi — June 21</div>
-      <div class="date-pill">Shadi — June 22</div>
     </div>
   </div>
 </section>
@@ -657,6 +810,88 @@
     </div>
 
     <div class="locations-grid">
+
+      <!-- ── Sagan Venue ── -->
+      <div class="location-card loc-groom reveal" data-delay="2">
+        <div class="location-card-bar"></div>
+
+        <iframe
+          class="map-frame"
+          src="https://maps.google.com/maps?q=30.33124546105754, 76.89238737977628&z=16&output=embed"
+          allowfullscreen="" loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+
+        <div class="location-card-body">
+          <div class="location-who">Sagan Venue</div>
+          <div class="location-name">Regenta Marrievilla</div>
+          <div class="location-detail">
+            <span class="ldi">📍</span>
+            <!-- UPDATE: Replace with the actual street address -->
+            <span class="ldt">Jagadhari Rd, Khuda Khurd,<br>Ambala City, Haryana — 134 003</span>
+          </div>
+          <!-- <div class="location-detail">
+            <span class="ldi">🗓</span>
+            <span class="ldt">Sagan &amp; Engagement — Friday, June 19<br>DJ Night &amp; Mehndi — June 21</span>
+          </div> -->
+          <div class="location-detail">
+            <span class="ldi">📞</span>
+            <!-- UPDATE: Replace with actual contact number -->
+            <span class="ldt">+91 81685 34483</span>
+          </div>
+          <div class="location-divider"></div>
+          <!--
+            UPDATE: Replace LAT and LNG in the href below with actual coordinates
+            Example: https://www.google.com/maps/dir/?api=1&destination=30.9010,76.8573
+          -->
+          <a class="btn-directions"
+             href="https://www.google.com/maps/dir/?api=1&destination=30.331228560711654, 76.89251167012128"
+             target="_blank" rel="noopener">
+            🗺 Get Directions
+          </a>
+        </div>
+      </div>
+
+      <!-- ── Shaadi Venue ── -->
+      <div class="location-card loc-bride reveal" data-delay="2">
+        <div class="location-card-bar"></div>
+
+        <iframe
+          class="map-frame"
+          src="https://maps.google.com/maps?q=30.850105292104175, 75.79494054232777&z=16&output=embed"
+          allowfullscreen="" loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+
+        <div class="location-card-body">
+          <div class="location-who">Shaadi Venue</div>
+          <div class="location-name">Sterling Resort Ludhiana</div>
+          <div class="location-detail">
+            <span class="ldi">📍</span>
+            <!-- UPDATE: Replace with the actual street address -->
+            <span class="ldt">Pakhowal Road,<br>Ludhiana, Punjab — 142022</span>
+          </div>
+          <!-- <div class="location-detail">
+            <span class="ldi">🗓</span>
+            <span class="ldt">Sagan &amp; Engagement — Friday, June 19<br>DJ Night &amp; Mehndi — June 21</span>
+          </div> -->
+          <div class="location-detail">
+            <span class="ldi">📞</span>
+            <!-- UPDATE: Replace with actual contact number -->
+            <span class="ldt">+91 98141 76441</span>
+          </div>
+          <div class="location-divider"></div>
+          <!--
+            UPDATE: Replace LAT and LNG in the href below with actual coordinates
+            Example: https://www.google.com/maps/dir/?api=1&destination=30.9010,76.8573
+          -->
+          <a class="btn-directions"
+             href="https://www.google.com/maps/dir/?api=1&destination=30.85014213542521, 75.79492981349165"
+             target="_blank" rel="noopener">
+            🗺 Get Directions
+          </a>
+        </div>
+      </div>
 
       <!-- ── GROOM'S HOUSE ── -->
       <div class="location-card loc-groom reveal" data-delay="2">
@@ -736,11 +971,10 @@
         <div class="location-card-body">
           <div class="location-who">Bride's Residence</div>
           <div class="location-name">Prerna's Family Home</div>
-          <!-- <div class="location-detail">
+          <div class="location-detail">
             <span class="ldi">📍</span>
-            <-- UPDATE: Replace with the actual street address --
-            <span class="ldt">House No. XX, Street Name,<br>Ludhiana, Punjab — 141 XXX</span>
-          </div> -->
+            <span class="ldt">House No. 4, Sec 6A, Guru Gian Vihar, Chotti Jawaddhi,<br>Ludhiana, Punjab — 141 013</span>
+          </div>
           <!-- <div class="location-detail">
             <span class="ldi">🗓</span>
             <span class="ldt">DJ Night &amp; Mehndi — June 21<br>Baarat &amp; Shadi — Monday, June 22</span>
@@ -748,7 +982,7 @@
           <div class="location-detail">
             <span class="ldi">📞</span>
             <!-- UPDATE: Replace with actual contact number -->
-            <span class="ldt">+91 98559 76262</span>
+            <span class="ldt">+91 98141 76441</span>
           </div>
           <div class="location-divider"></div>
           <!--
@@ -871,18 +1105,88 @@
 <!-- ══ FOOTER ══ -->
 <footer>
   <div class="footer-pattern"></div>
-  <div class="footer-monogram">P &amp; G</div>
+  <div class="footer-monogram">#GauravKiPrerna</div>
   <div class="footer-hearts">♥ &nbsp; ♥ &nbsp; ♥</div>
   <p class="footer-note">19-22 June 2026</p>
   <p class="footer-note" style="margin-top:0.4rem;">With love, laughter &amp; lots of mithai 🍬</p>
 
   <div class="footer-maamu">
     <span class="qdot">❝</span>
-    Mele Maamu ki Shaadi me &nbsp;—&nbsp; Jalool Jalool Aana!
+    Mele Maamu ki Shaadi me &nbsp;—&nbsp; Jalool Jalool Aana! - Kiaan
+    <span style="font-size: 0.55em;"> (Chief Mischief and Organizing Officer)</span>
   </div>
 </footer>
 
 <script>
+  /* ══ CURTAIN LOGIC ══ */
+  (function() {
+    const leftPanel   = document.getElementById('curtain-left');
+    const rightPanel  = document.getElementById('curtain-right');
+    const nameplate   = document.getElementById('curtain-nameplate');
+    const body        = document.body;
+
+    // Lock scroll while curtain is up
+    body.classList.add('curtain-active');
+
+    // Track wheel/touch to open the curtain
+    let progress = 0;      // 0 = closed, 1 = open
+    let opened   = false;
+    const NEEDED = 120;    // accumulated scroll delta needed to fully open
+    let accumulated = 0;
+
+    function applyCurtain(prog) {
+      // Slide each panel outward by up to 100% of its own width
+      const pct = prog * 100;
+      leftPanel.style.transform  = `translateX(-${pct}%)`;
+      rightPanel.style.transform = `translateX(${pct}%)`;
+      // Fade nameplate out as curtains open
+      nameplate.style.opacity = Math.max(0, 1 - prog * 2.5).toString();
+    }
+
+    function openCurtain() {
+      if (opened) return;
+      opened = true;
+
+      leftPanel.classList.add('open');
+      rightPanel.classList.add('open');
+      nameplate.style.opacity = '0';
+
+      // After transition, unlock scroll and remove curtain elements
+      setTimeout(() => {
+        body.classList.remove('curtain-active');
+        leftPanel.remove();
+        rightPanel.remove();
+        nameplate.remove();
+      }, 950);
+    }
+
+    // Wheel handler — accumulate delta, open when threshold met
+    window.addEventListener('wheel', (e) => {
+      if (opened) return;
+      if (e.deltaY <= 0) return; // only downward scroll
+      accumulated += e.deltaY;
+      progress = Math.min(accumulated / NEEDED, 1);
+      applyCurtain(progress);
+      if (progress >= 1) openCurtain();
+    }, { passive: true });
+
+    // Touch support
+    let touchStartY = null;
+    window.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (opened || touchStartY === null) return;
+      const dy = touchStartY - e.touches[0].clientY;
+      if (dy <= 0) return;
+      accumulated += dy * 2;
+      touchStartY = e.touches[0].clientY;
+      progress = Math.min(accumulated / NEEDED, 1);
+      applyCurtain(progress);
+      if (progress >= 1) openCurtain();
+    }, { passive: true });
+  })();
+
   /* ── Cursor ── */
   const cursor = document.getElementById('cursor');
   const ring   = document.getElementById('cursorRing');
@@ -932,7 +1236,7 @@
   /* ── RSVP ── */
   const form    = document.getElementById('rsvpForm');
   const success = document.getElementById('formSuccess');
-  form.addEventListener('submit', async (e) => {
+  if (form) { form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = form.querySelector('.btn-submit');
     btn.textContent = 'Bhej rahe hain…';
@@ -956,7 +1260,7 @@
     }
     form.style.display = 'none';
     success.style.display = 'block';
-  });
+  }); }
 </script>
 </body>
 </html>
