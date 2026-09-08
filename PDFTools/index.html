@@ -3,431 +3,687 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy-First PDF Tools</title>
+    <title>PrivacyPDF - Professional Local Tools</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { 
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    animation: { 'fade-in': 'fadeIn 0.3s ease-out' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } } }
+                }
+            }
+        }
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <!-- pdf.js for rendering PDFs to images -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- JSZip for packaging downloaded images -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- Signature Pad for drawing -->
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-</head>
-<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
 
-    <nav class="bg-gray-900 text-white p-4 shadow-md">
-        <div class="max-w-5xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="showLanding()">
-                <svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
-                <span class="font-bold text-xl tracking-wide">PDFTools</span>
+    <style>
+        /* Premium, lightweight custom styles (pure CSS + Tailwind utilities, no extra assets) */
+        body {
+            background-color: #FAFAFA;
+            background-image:
+                radial-gradient(circle at 12% 0%, rgba(99,102,241,0.08), transparent 40%),
+                radial-gradient(circle at 88% 12%, rgba(236,72,153,0.06), transparent 38%);
+            background-attachment: fixed;
+        }
+
+        .glass-nav { @apply bg-white/70 backdrop-blur-xl border-b border-gray-200/70; }
+
+        .tool-card { @apply relative bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-gray-200/80 cursor-pointer transition-all duration-300 flex flex-col overflow-hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .tool-card:hover { transform: translateY(-4px); border-color: rgba(17,24,39,0.15); box-shadow: 0 12px 28px -8px rgba(0,0,0,0.12); }
+        .tool-card::before { content:''; position:absolute; inset:0; opacity:0; background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(236,72,153,0.04)); transition: opacity .3s ease; pointer-events: none; }
+        .tool-card:hover::before { opacity: 1; }
+
+        .tool-icon { @apply w-11 h-11 rounded-xl flex items-center justify-center mb-4 shadow-sm transition-transform duration-300 ease-out; }
+        .tool-card:hover .tool-icon { transform: scale(1.08) rotate(-4deg); }
+
+        .modern-file-input { @apply block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white file:shadow-sm hover:file:bg-gray-800 cursor-pointer border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50/60 p-8 text-center transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50/40; }
+
+        .action-btn { @apply w-full bg-gray-900 hover:bg-black text-white py-3.5 rounded-xl font-semibold transition-all duration-200 outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+        .action-btn:not(:disabled):hover { box-shadow: 0 6px 20px rgba(0,0,0,0.25); transform: translateY(-1px); }
+        .reset-btn { @apply w-full bg-white hover:bg-gray-50 text-gray-700 py-3 mt-3 rounded-xl font-semibold transition-all duration-200 border border-gray-200 shadow-sm hover:-translate-y-0.5; }
+
+        .sleek-input { @apply w-full border border-gray-200 rounded-xl p-3 bg-white text-gray-900 focus:outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 transition-all; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .sleek-label { @apply block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2; }
+
+        .tool-view { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="text-gray-900 selection:bg-gray-200 antialiased">
+
+    <!-- Minimalist Navbar -->
+    <nav class="glass-nav sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer group" onclick="showLanding()">
+                <div class="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                    <svg class="w-4.5 h-4.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <span class="font-extrabold text-xl tracking-tight">PrivacyPDF</span>
             </div>
-            <button id="navBackBtn" onclick="showLanding()" class="hidden text-sm bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded transition">← Back to All Tools</button>
+            <button id="navBackBtn" onclick="showLanding()" class="hidden font-semibold text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-all">
+                ← Back to Tools
+            </button>
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto mt-10 p-4">
+    <main class="max-w-6xl mx-auto mt-12 px-6 pb-24">
         
         <!-- ========================================== -->
         <!-- VIEW 1: LANDING PAGE                       -->
         <!-- ========================================== -->
-        <div id="landingView" class="block">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl font-extrabold text-gray-900 mb-4">Privacy-First PDF Tools</h1>
-                <p class="text-lg text-gray-600">100% Free. Secure. Processes directly in your browser.</p>
+        <div id="landingView" class="block animate-fade-in">
+            <div class="mb-16 max-w-2xl">
+                <span class="inline-flex items-center gap-2 bg-white border border-gray-200 shadow-sm text-xs font-bold text-gray-600 px-3 py-1.5 rounded-full mb-5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    100% Client-Side · Zero Uploads
+                </span>
+                <h1 class="text-4xl sm:text-5xl font-extrabold mb-4 tracking-tight leading-tight">Professional PDF tools.<br><span class="bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-600 bg-clip-text text-transparent">Running entirely on your device.</span></h1>
+                <p class="text-lg text-gray-500 font-medium leading-relaxed">Secure, serverless operations. Your sensitive documents never touch a cloud server. Select a tool to begin.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Original Tools -->
-                <div onclick="showTool('mergeView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-red-400 cursor-pointer text-center">
-                    <h3 class="font-bold mb-1 text-red-600">Merge PDF</h3>
-                    <p class="text-gray-500 text-xs">Combine multiple PDFs.</p>
-                </div>
-                <div onclick="showTool('splitView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-blue-400 cursor-pointer text-center">
-                    <h3 class="font-bold mb-1 text-blue-600">Split PDF</h3>
-                    <p class="text-gray-500 text-xs">Extract specific pages.</p>
-                </div>
-                <div onclick="showTool('imgToPdfView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-green-400 cursor-pointer text-center">
-                    <h3 class="font-bold mb-1 text-green-600">Image to PDF</h3>
-                    <p class="text-gray-500 text-xs">Convert JPG/PNG to PDF.</p>
-                </div>
-                <!-- Phase 1 Tools -->
-                <div onclick="showTool('watermarkView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-purple-400 cursor-pointer text-center">
-                    <h3 class="font-bold mb-1 text-purple-600">Watermark</h3>
-                    <p class="text-gray-500 text-xs">Stamp text across pages.</p>
-                </div>
-                <div onclick="showTool('numberingView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-orange-400 cursor-pointer text-center">
-                    <h3 class="font-bold mb-1 text-orange-600">Page Numbers</h3>
-                    <p class="text-gray-500 text-xs">Add footer numbers.</p>
-                </div>
-                <div onclick="showTool('metadataView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-teal-400 cursor-pointer text-center">
-                    <h3 class="font-bold mb-1 text-teal-600">Edit Metadata</h3>
-                    <p class="text-gray-500 text-xs">Change Title, Author, etc.</p>
-                </div>
-                <!-- NEW: Phase 2 Tools -->
-                <div onclick="showTool('unlockView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-yellow-500 cursor-pointer text-center">
-                    <h3 class="font-bold mb-1 text-yellow-600">Unlock PDF</h3>
-                    <p class="text-gray-500 text-xs">Remove password protection.</p>
-                </div>
-                <div onclick="showTool('protectView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-slate-500 cursor-pointer text-center">
-                    <h3 class="font-bold mb-1 text-slate-600">Protect PDF</h3>
-                    <p class="text-gray-500 text-xs">Encrypt and restrict access.</p>
-                </div>
-                <!-- NEW: Phase 3 Tools -->
-                <div onclick="showTool('pdfToImgView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-pink-500 cursor-pointer text-center group">
-                    <h3 class="font-bold mb-1 text-pink-600">PDF to Images</h3>
-                    <p class="text-gray-500 text-xs">Convert pages to JPGs.</p>
-                </div>
-                <div onclick="showTool('signView')" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md hover:border-indigo-500 cursor-pointer text-center group">
-                    <h3 class="font-bold mb-1 text-indigo-600">E-Sign PDF</h3>
-                    <p class="text-gray-500 text-xs">Draw and stamp your signature.</p>
-                </div>
+            <!-- Bento Box Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" id="toolGrid">
+                <!-- Injected via JS for clean HTML -->
             </div>
         </div>
 
-        <!-- HIDDEN: Original 6 Tools HTML (Condensed) -->
-        <div id="mergeView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-red-500"><h2 class="text-2xl font-bold mb-4">Merge PDFs</h2><input type="file" id="mergeFileInput" accept="application/pdf" multiple class="block w-full border p-2 mb-4 rounded cursor-pointer"><ul id="mergeFileList" class="mb-4 space-y-2 text-sm text-gray-600 cursor-move"></ul><button id="mergeBtn" class="w-full bg-red-500 text-white py-3 rounded-lg font-bold">Merge PDFs</button><div id="mergeStatus" class="mt-4 text-center hidden"></div></div>
-        <div id="splitView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-blue-500"><h2 class="text-2xl font-bold mb-4">Split PDF</h2><input type="file" id="splitFileInput" accept="application/pdf" class="block w-full border p-2 mb-4 rounded cursor-pointer"><div class="flex gap-2 mb-4"><input type="number" id="splitStartPage" placeholder="From" class="border p-2 w-full"><input type="number" id="splitEndPage" placeholder="To" class="border p-2 w-full"></div><button id="splitBtn" class="w-full bg-blue-500 text-white py-3 rounded-lg font-bold">Extract Pages</button><div id="splitStatus" class="mt-4 text-center hidden"></div></div>
-        <div id="imgToPdfView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-green-500"><h2 class="text-2xl font-bold mb-4">Image to PDF</h2><input type="file" id="imgFileInput" accept="image/jpeg, image/png" multiple class="block w-full border p-2 mb-4 rounded cursor-pointer"><ul id="imgFileList" class="mb-4 space-y-2 text-sm text-gray-600 cursor-move"></ul><button id="imgBtn" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold">Convert to PDF</button><div id="imgStatus" class="mt-4 text-center hidden"></div></div>
-        <div id="watermarkView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-purple-500"><h2 class="text-2xl font-bold mb-4">Add Watermark</h2><input type="file" id="wmFileInput" accept="application/pdf" class="block w-full border p-2 mb-4 rounded cursor-pointer"><div id="wmControls" class="hidden"><input type="text" id="wmTextInput" value="CONFIDENTIAL" class="w-full border p-2 rounded mb-4 text-lg text-center font-bold text-gray-500"><button id="wmBtn" class="w-full bg-purple-500 text-white py-3 rounded-lg font-bold">Stamp PDF</button></div><div id="wmStatus" class="mt-4 text-center hidden"></div></div>
-        <div id="numberingView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-orange-500"><h2 class="text-2xl font-bold mb-4">Page Numbers</h2><input type="file" id="numFileInput" accept="application/pdf" class="block w-full border p-2 mb-4 rounded cursor-pointer"><div id="numControls" class="hidden"><button id="numBtn" class="w-full bg-orange-500 text-white py-3 rounded-lg font-bold">Add Numbers</button></div><div id="numStatus" class="mt-4 text-center hidden"></div></div>
-        <div id="metadataView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-teal-500"><h2 class="text-2xl font-bold mb-4">Edit Metadata</h2><input type="file" id="metaFileInput" accept="application/pdf" class="block w-full border p-2 mb-4 rounded cursor-pointer"><div id="metaControls" class="hidden space-y-3 mb-6"><input type="text" id="metaTitle" placeholder="Title" class="w-full border p-2 rounded"><input type="text" id="metaAuthor" placeholder="Author" class="w-full border p-2 rounded"><input type="text" id="metaSubject" placeholder="Subject" class="w-full border p-2 rounded"><button id="metaBtn" class="w-full bg-teal-500 text-white py-3 mt-4 rounded-lg font-bold">Save Metadata</button></div><div id="metaStatus" class="mt-4 text-center hidden"></div></div>
-
         <!-- ========================================== -->
-        <!-- NEW: UNLOCK PDF VIEW                       -->
+        <!-- TOOL VIEWS CONTAINER                       -->
         <!-- ========================================== -->
-        <div id="unlockView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-yellow-500">
-            <h2 class="text-2xl font-bold mb-4">Unlock PDF</h2>
-            <p class="text-gray-500 text-sm mb-4">Remove password protection from an encrypted PDF.</p>
-            <input type="file" id="unlockFileInput" accept="application/pdf" class="block w-full border p-2 mb-4 rounded cursor-pointer">
-            <div id="unlockControls" class="hidden">
-                <input type="password" id="unlockPwd" placeholder="Enter Document Password" class="w-full border p-2 rounded mb-4 text-lg">
-                <button id="unlockBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg font-bold">Decrypt & Download</button>
-            </div>
-            <div id="unlockStatus" class="mt-4 text-center hidden"></div>
+        
+        <!-- 1. MERGE PDF -->
+        <div id="mergeView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">Merge PDFs</h2>
+            <p class="text-gray-500 mb-6 text-sm">Select multiple PDFs. Drag items to reorder them.</p>
+            <input type="file" id="mergeFileInput" accept="application/pdf" multiple class="modern-file-input mb-4">
+            <ul id="mergeFileList" class="mb-6 space-y-2 text-sm text-gray-700 cursor-move font-medium"></ul>
+            <button id="mergeBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Merge Documents</button>
+            <div id="mergeStatus" class="hidden"></div>
+            <button id="mergeResetBtn" class="reset-btn hidden" onclick="resetTool('merge')">Process More Files</button>
         </div>
 
-        <!-- ========================================== -->
-        <!-- NEW: PROTECT PDF VIEW                      -->
-        <!-- ========================================== -->
-        <div id="protectView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-slate-600">
-            <h2 class="text-2xl font-bold mb-4">Protect & Restrict PDF</h2>
-            <p class="text-gray-500 text-sm mb-4">Encrypt with 256-bit AES and restrict permissions.</p>
-            <input type="file" id="protectFileInput" accept="application/pdf" class="block w-full border p-2 mb-4 rounded cursor-pointer">
+        <!-- 2. SPLIT PDF -->
+        <div id="splitView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">Split PDF</h2>
+            <p class="text-gray-500 mb-6 text-sm">Extract specific pages to a new document.</p>
+            <input type="file" id="splitFileInput" accept="application/pdf" class="modern-file-input mb-4">
+            <div id="splitControls" class="hidden mb-6">
+                <label class="sleek-label">Pages to Extract</label>
+                <div class="flex items-center gap-3">
+                    <input type="number" id="splitStartPage" placeholder="From" class="sleek-input">
+                    <span class="text-gray-400 font-bold">to</span>
+                    <input type="number" id="splitEndPage" placeholder="To" class="sleek-input">
+                </div>
+            </div>
+            <button id="splitBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Extract Pages</button>
+            <div id="splitStatus" class="hidden"></div>
+            <button id="splitResetBtn" class="reset-btn hidden" onclick="resetTool('split')">Process Another File</button>
+        </div>
+
+        <!-- 3. IMG TO PDF -->
+        <div id="imgView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">Image to PDF</h2>
+            <p class="text-gray-500 mb-6 text-sm">Convert JPG or PNG images into a single PDF.</p>
+            <input type="file" id="imgFileInput" accept="image/jpeg, image/png" multiple class="modern-file-input mb-4">
+            <ul id="imgFileList" class="mb-6 space-y-2 text-sm text-gray-700 cursor-move font-medium"></ul>
+            <button id="imgBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Convert to PDF</button>
+            <div id="imgStatus" class="hidden"></div>
+            <button id="imgResetBtn" class="reset-btn hidden" onclick="resetTool('img')">Process More Images</button>
+        </div>
+
+        <!-- 4. WATERMARK -->
+        <div id="wmView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">Add Watermark</h2>
+            <p class="text-gray-500 mb-6 text-sm">Stamp text diagonally across all pages.</p>
+            <input type="file" id="wmFileInput" accept="application/pdf" class="modern-file-input mb-4">
+            <div id="wmControls" class="hidden mb-6">
+                <label class="sleek-label">Watermark Text</label>
+                <input type="text" id="wmTextInput" value="CONFIDENTIAL" class="sleek-input font-bold text-center tracking-widest text-gray-500">
+            </div>
+            <button id="wmBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Stamp Document</button>
+            <div id="wmStatus" class="hidden"></div>
+            <button id="wmResetBtn" class="reset-btn hidden" onclick="resetTool('wm')">Process Another File</button>
+        </div>
+
+        <!-- 5. NUMBERING (UPGRADED WITH POSITIONING) -->
+        <div id="numView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">Page Numbers</h2>
+            <p class="text-gray-500 mb-6 text-sm">Add sequential numbers to your document.</p>
+            <input type="file" id="numFileInput" accept="application/pdf" class="modern-file-input mb-4">
+            
+            <div id="numControls" class="hidden mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="sleek-label">Vertical Position</label>
+                        <select id="numVPos" class="sleek-input">
+                            <option value="bottom">Bottom</option>
+                            <option value="top">Top</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="sleek-label">Horizontal Position</label>
+                        <select id="numHPos" class="sleek-input">
+                            <option value="center">Center</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button id="numBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Add Numbers</button>
+            <div id="numStatus" class="hidden"></div>
+            <button id="numResetBtn" class="reset-btn hidden" onclick="resetTool('num')">Process Another File</button>
+        </div>
+
+        <!-- 6. METADATA -->
+        <div id="metaView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">Edit Metadata</h2>
+            <p class="text-gray-500 mb-6 text-sm">Update hidden document properties.</p>
+            <input type="file" id="metaFileInput" accept="application/pdf" class="modern-file-input mb-4">
+            <div id="metaControls" class="hidden space-y-4 mb-6">
+                <div><label class="sleek-label">Title</label><input type="text" id="metaTitle" class="sleek-input"></div>
+                <div><label class="sleek-label">Author</label><input type="text" id="metaAuthor" class="sleek-input"></div>
+                <div><label class="sleek-label">Subject</label><input type="text" id="metaSubject" class="sleek-input"></div>
+            </div>
+            <button id="metaBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Save Metadata</button>
+            <div id="metaStatus" class="hidden"></div>
+            <button id="metaResetBtn" class="reset-btn hidden" onclick="resetTool('meta')">Process Another File</button>
+        </div>
+
+        <!-- 7. UNLOCK -->
+        <div id="unlockView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">Unlock PDF</h2>
+            <p class="text-gray-500 mb-6 text-sm">Remove security from an encrypted PDF.</p>
+            <input type="file" id="unlockFileInput" accept="application/pdf" class="modern-file-input mb-4">
+            <div id="unlockControls" class="hidden mb-6">
+                <label class="sleek-label">Document Password</label>
+                <input type="password" id="unlockPwd" class="sleek-input text-xl tracking-widest font-bold">
+            </div>
+            <button id="unlockBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Decrypt Document</button>
+            <div id="unlockStatus" class="hidden"></div>
+            <button id="unlockResetBtn" class="reset-btn hidden" onclick="resetTool('unlock')">Unlock Another File</button>
+        </div>
+
+        <!-- 8. PROTECT -->
+        <div id="protectView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">Protect PDF</h2>
+            <p class="text-gray-500 mb-6 text-sm">Secure with 256-bit AES encryption.</p>
+            <input type="file" id="protectFileInput" accept="application/pdf" class="modern-file-input mb-4">
             
             <div id="protectControls" class="hidden space-y-4 mb-6">
-                <div>
-                    <label class="block font-medium text-sm">User Password (Required to open file)</label>
-                    <input type="password" id="protectUserPw" class="w-full border p-2 rounded">
-                </div>
-                <div>
-                    <label class="block font-medium text-sm text-gray-500">Owner Password (Required to change permissions later)</label>
-                    <input type="password" id="protectOwnerPw" class="w-full border p-2 rounded">
-                </div>
+                <div><label class="sleek-label">Password to Open</label><input type="password" id="protectUserPw" class="sleek-input"></div>
+                <div><label class="sleek-label">Owner Password (Optional)</label><input type="password" id="protectOwnerPw" class="sleek-input"></div>
                 
-                <div class="bg-slate-50 p-4 rounded-lg border">
-                    <h4 class="font-bold mb-3 text-sm text-slate-700">Set Restrictions</h4>
-                    <label class="flex items-center space-x-2 mb-2 cursor-pointer"><input type="checkbox" id="cbNoPrint" class="w-4 h-4 text-slate-600"> <span>Disable Printing</span></label>
-                    <label class="flex items-center space-x-2 mb-2 cursor-pointer"><input type="checkbox" id="cbNoCopy" class="w-4 h-4 text-slate-600"> <span>Disable Copying Text</span></label>
-                    <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" id="cbNoEdit" class="w-4 h-4 text-slate-600"> <span>Disable Editing</span></label>
+                <div class="pt-4 mt-2 border-t border-gray-100">
+                    <label class="sleek-label mb-3">Permissions</label>
+                    <label class="flex items-center space-x-3 mb-2 cursor-pointer"><input type="checkbox" id="cbNoPrint" class="w-4 h-4 text-gray-900 rounded focus:ring-gray-900"> <span class="text-sm font-medium">Disable Printing</span></label>
+                    <label class="flex items-center space-x-3 mb-2 cursor-pointer"><input type="checkbox" id="cbNoCopy" class="w-4 h-4 text-gray-900 rounded focus:ring-gray-900"> <span class="text-sm font-medium">Disable Copying Text</span></label>
+                    <label class="flex items-center space-x-3 cursor-pointer"><input type="checkbox" id="cbNoEdit" class="w-4 h-4 text-gray-900 rounded focus:ring-gray-900"> <span class="text-sm font-medium">Disable Editing</span></label>
                 </div>
-
-                <button id="protectBtn" class="w-full bg-slate-600 hover:bg-slate-700 text-white py-3 mt-4 rounded-lg font-bold">Encrypt PDF</button>
             </div>
-            <div id="protectStatus" class="mt-4 text-center hidden"></div>
+
+            <button id="protectBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Encrypt Document</button>
+            <div id="protectStatus" class="hidden"></div>
+            <button id="protectResetBtn" class="reset-btn hidden" onclick="resetTool('protect')">Protect Another File</button>
         </div>
 
-        <!-- ========================================== -->
-        <!-- NEW: PDF TO IMAGES VIEW                    -->
-        <!-- ========================================== -->
-        <div id="pdfToImgView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-pink-500">
-            <h2 class="text-2xl font-bold mb-4">PDF to Images</h2>
-            <p class="text-gray-500 text-sm mb-4">Extract every page of a PDF as a high-quality JPG image.</p>
-            <input type="file" id="pdfToImgInput" accept="application/pdf" class="block w-full border p-2 mb-4 rounded cursor-pointer">
-            <button id="pdfToImgBtn" class="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-lg font-bold hidden">Convert & Download ZIP</button>
-            <div id="pdfToImgStatus" class="mt-4 text-center hidden"></div>
+        <!-- 9. PDF TO IMG -->
+        <div id="pdfImgView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">PDF to Images</h2>
+            <p class="text-gray-500 mb-6 text-sm">Extract every page as a high-quality JPG.</p>
+            <input type="file" id="pdfImgFileInput" accept="application/pdf" class="modern-file-input mb-4">
+            <button id="pdfImgBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Download as ZIP</button>
+            <div id="pdfImgStatus" class="hidden"></div>
+            <button id="pdfImgResetBtn" class="reset-btn hidden" onclick="resetTool('pdfImg')">Process Another File</button>
         </div>
 
-        <!-- ========================================== -->
-        <!-- NEW: E-SIGN PDF VIEW                       -->
-        <!-- ========================================== -->
-        <div id="signView" class="hidden tool-view bg-white rounded-xl shadow-lg p-6 max-w-xl mx-auto border-t-4 border-indigo-500">
-            <h2 class="text-2xl font-bold mb-4">E-Sign PDF</h2>
-            <p class="text-gray-500 text-sm mb-4">Draw your signature and permanently stamp it on the document.</p>
-            <input type="file" id="signInput" accept="application/pdf" class="block w-full border p-2 mb-4 rounded cursor-pointer">
+        <!-- 10. E-SIGN (UPGRADED WITH POSITIONING) -->
+        <div id="signView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
+            <h2 class="text-2xl font-bold mb-1">E-Sign PDF</h2>
+            <p class="text-gray-500 mb-6 text-sm">Draw and stamp your signature exactly where you need it.</p>
+            <input type="file" id="signFileInput" accept="application/pdf" class="modern-file-input mb-4">
             
-            <div id="signControls" class="hidden">
-                <p class="font-medium mb-2">Draw your signature below:</p>
-                <canvas id="sigCanvas" width="500" height="200" class="bg-gray-50 border-2 border-dashed border-gray-400 rounded-lg cursor-crosshair mb-4 w-full"></canvas>
-                <div class="flex gap-4">
-                    <button id="clearSigBtn" class="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-bold">Clear</button>
-                    <button id="applySigBtn" class="w-2/3 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-lg font-bold">Sign & Download</button>
+            <div id="signControls" class="hidden mb-6">
+                
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
+                    <label class="sleek-label mb-3">Signature Placement</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <select id="signVPos" class="sleek-input">
+                                <option value="bottom">Bottom of Page</option>
+                                <option value="middle">Middle of Page</option>
+                                <option value="top">Top of Page</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="signHPos" class="sleek-input">
+                                <option value="right">Right Side</option>
+                                <option value="center">Center</option>
+                                <option value="left">Left Side</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
+                    <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex justify-between items-center">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Drawing Pad</span>
+                        <button onclick="signaturePad.clear()" class="text-xs font-bold text-gray-600 hover:text-gray-900 transition">Clear Pad</button>
+                    </div>
+                    <canvas id="sigCanvas" width="500" height="200" class="cursor-crosshair w-full"></canvas>
                 </div>
             </div>
-            <div id="signStatus" class="mt-4 text-center hidden"></div>
+
+            <button id="signBtn" class="action-btn opacity-50 cursor-not-allowed" disabled>Sign & Download</button>
+            <div id="signStatus" class="hidden"></div>
+            <button id="signResetBtn" class="reset-btn hidden" onclick="resetTool('sign')">Sign Another File</button>
         </div>
 
     </main>
 
     <script>
-        // --- NAVIGATION & UTILS ---
+        // ==========================================
+        // UI RENDERING & ROUTING
+        // ==========================================
+        const tools = [
+            {id: 'merge', name: 'Merge PDF', desc: 'Combine multiple files into one.', icon: 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2', color: 'bg-indigo-50 text-indigo-600'},
+            {id: 'split', name: 'Split PDF', desc: 'Extract pages to a new file.', icon: 'M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5', color: 'bg-violet-50 text-violet-600'},
+            {id: 'img', name: 'Img to PDF', desc: 'Convert JPG/PNG to PDF.', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', color: 'bg-pink-50 text-pink-600'},
+            {id: 'wm', name: 'Watermark', desc: 'Stamp text across pages.', icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z', color: 'bg-amber-50 text-amber-600'},
+            {id: 'num', name: 'Page Numbers', desc: 'Add pagination to footer/header.', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', color: 'bg-blue-50 text-blue-600'},
+            {id: 'meta', name: 'Metadata', desc: 'Edit hidden document properties.', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', color: 'bg-teal-50 text-teal-600'},
+            {id: 'unlock', name: 'Unlock PDF', desc: 'Remove password protection.', icon: 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z', color: 'bg-emerald-50 text-emerald-600'},
+            {id: 'protect', name: 'Protect PDF', desc: 'Encrypt and restrict permissions.', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', color: 'bg-rose-50 text-rose-600'},
+            {id: 'pdfImg', name: 'PDF to Img', desc: 'Extract pages as JPGs.', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12', color: 'bg-cyan-50 text-cyan-600'},
+            {id: 'sign', name: 'E-Sign PDF', desc: 'Draw and place your signature.', icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z', color: 'bg-fuchsia-50 text-fuchsia-600'}
+        ];
+
+        const grid = document.getElementById('toolGrid');
+        tools.forEach(t => {
+            grid.innerHTML += `
+                <div onclick="showTool('${t.id}View')" class="tool-card">
+                    <div class="tool-icon ${t.color}"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${t.icon}"></path></svg></div>
+                    <h3 class="font-bold text-gray-900 mb-1 relative">${t.name}</h3>
+                    <p class="text-gray-500 text-xs font-medium leading-relaxed relative">${t.desc}</p>
+                </div>
+            `;
+        });
+
         function showTool(toolId) {
             document.getElementById('landingView').classList.add('hidden');
             document.querySelectorAll('.tool-view').forEach(el => el.classList.add('hidden'));
             document.getElementById(toolId).classList.remove('hidden');
             document.getElementById('navBackBtn').classList.remove('hidden');
-            document.querySelectorAll('div[id$="Status"]').forEach(el => el.classList.add('hidden'));
         }
+        
         function showLanding() {
             document.querySelectorAll('.tool-view').forEach(el => el.classList.add('hidden'));
             document.getElementById('landingView').classList.remove('hidden');
             document.getElementById('navBackBtn').classList.add('hidden');
         }
+
+        // ==========================================
+        // HELPERS
+        // ==========================================
+        function getFileName(file, suffix) {
+            if (!file) return `document_${suffix}`;
+            return `${file.name.replace(/\.[^/.]+$/, "")}_${suffix}`;
+        }
+
         function triggerDownload(bytes, filename) {
-            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const blob = new Blob([bytes], { type: filename.endsWith('.zip') ? 'application/zip' : 'application/pdf' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a'); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url);
         }
 
+        function updateStatus(prefix, state, msg = "", filename = "") {
+            const btn = document.getElementById(`${prefix}Btn`);
+            const status = document.getElementById(`${prefix}Status`);
+            const resetBtn = document.getElementById(`${prefix}ResetBtn`);
+            
+            if (state === 'processing') {
+                btn.classList.add('hidden');
+                resetBtn.classList.add('hidden');
+                status.classList.remove('hidden');
+                status.className = "mt-4 text-center block animate-pulse text-sm font-bold bg-gray-50 text-gray-800 p-4 rounded-lg border border-gray-200";
+                status.textContent = msg || "Processing...";
+            } else if (state === 'success') {
+                status.className = "mt-4 text-center block text-sm font-medium bg-green-50 text-green-800 p-4 rounded-lg border border-green-200";
+                status.innerHTML = `<span class="font-bold block mb-1">✅ Success!</span>File saved as <span class="font-bold">${filename}</span>`;
+                resetBtn.classList.remove('hidden');
+            } else if (state === 'error') {
+                btn.classList.remove('hidden');
+                status.className = "mt-4 text-center block text-sm font-bold bg-red-50 text-red-600 p-4 rounded-lg border border-red-200";
+                status.textContent = "❌ " + msg;
+            }
+        }
+
+        function resetTool(prefix) {
+            document.getElementById(`${prefix}FileInput`).value = "";
+            const controls = document.getElementById(`${prefix}Controls`);
+            if(controls) controls.classList.add('hidden');
+            
+            const btn = document.getElementById(`${prefix}Btn`);
+            btn.classList.remove('hidden');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            document.getElementById(`${prefix}Status`).classList.add('hidden');
+            document.getElementById(`${prefix}ResetBtn`).classList.add('hidden');
+            
+            if(prefix === 'merge') document.getElementById('mergeFileList').innerHTML = '';
+            if(prefix === 'img') document.getElementById('imgFileList').innerHTML = '';
+            if(prefix === 'sign' && typeof signaturePad !== 'undefined') signaturePad.clear();
+        }
+
+        function enableTool(prefix) {
+            const controls = document.getElementById(`${prefix}Controls`);
+            if(controls) controls.classList.remove('hidden');
+            const btn = document.getElementById(`${prefix}Btn`);
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
         // ==========================================
-        // WEBASSEMBLY QPDF ENGINE LOADER (FIXED)
+        // QPDF WEBASSEMBLY LOADER
         // ==========================================
         async function getQPDF() {
             return new Promise((resolve, reject) => {
+                if (window.qpdfEngine) return resolve(window.qpdfEngine);
                 const script = document.createElement('script');
-                // FIX: Corrected version number to 0.3.0
                 script.src = "https://unpkg.com/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js";
-                
                 script.onload = async () => {
                     try {
-                        // The engine exposes itself as 'Module' on the window object
                         const factory = window.Module; 
-                        if (!factory) throw new Error("WASM factory function not found.");
-
-                        // Initialize a fresh instance of the C++ engine
-                        const qpdfInstance = await factory({
-                            // FIX: Ensure the WASM file uses the exact same 0.3.0 version
+                        if (!factory) throw new Error("WASM factory missing.");
+                        window.qpdfEngine = await factory({
                             locateFile: () => "https://unpkg.com/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm",
                             noInitialRun: true
                         });
-                        
-                        resolve(qpdfInstance);
-                    } catch (err) {
-                        reject(new Error("Failed to initialize engine: " + err.message));
-                    }
+                        resolve(window.qpdfEngine);
+                    } catch (err) { reject(new Error(err.message)); }
                 };
-                
-                script.onerror = () => reject(new Error("Failed to fetch script. Check your internet connection."));
+                script.onerror = () => reject(new Error("Network error"));
                 document.head.appendChild(script);
             });
         }
 
-        // ==========================================
-        // UNLOCK PDF LOGIC
-        // ==========================================
-        let unlockFile;
-        document.getElementById('unlockFileInput').addEventListener('change', (e) => {
-            if(e.target.files.length) { unlockFile = e.target.files[0]; document.getElementById('unlockControls').classList.remove('hidden'); }
-        });
-
-        document.getElementById('unlockBtn').addEventListener('click', async () => {
-            const status = document.getElementById('unlockStatus');
-            status.className = "mt-4 text-center text-yellow-600 block animate-pulse font-bold";
-            status.textContent = "Loading WebAssembly encryption engine...";
-            
-            try {
-                const qpdf = await getQPDF();
-                status.textContent = "Decrypting PDF locally...";
-                
-                const pwd = document.getElementById('unlockPwd').value;
-                const arrayBuffer = await unlockFile.arrayBuffer();
-                
-                // Write file into QPDF's virtual memory file system
-                qpdf.FS.writeFile('/unlock_in.pdf', new Uint8Array(arrayBuffer));
-                
-                try {
-                    // Execute QPDF CLI command in browser memory
-                    qpdf.callMain(['--password=' + pwd, '--decrypt', '/unlock_in.pdf', '/unlock_out.pdf']);
-                    
-                    // Read the output back out of memory
-                    const outBytes = qpdf.FS.readFile('/unlock_out.pdf');
-                    triggerDownload(outBytes, 'Unlocked.pdf');
-                    
-                    status.className = "mt-4 text-center text-green-600 block font-bold";
-                    status.textContent = "✅ PDF Unlocked Successfully!";
-                } catch(err) {
-                    status.className = "mt-4 text-center text-red-600 block font-bold";
-                    status.textContent = "❌ Incorrect password or corrupted file.";
-                }
-            } catch(e) {
-                status.className = "mt-4 text-center text-red-600 block font-bold";
-                status.textContent = "❌ Failed to load encryption engine.";
-            }
-        });
-
-        // ==========================================
-        // PROTECT PDF LOGIC
-        // ==========================================
-        let protectFile;
-        document.getElementById('protectFileInput').addEventListener('change', (e) => {
-            if(e.target.files.length) { protectFile = e.target.files[0]; document.getElementById('protectControls').classList.remove('hidden'); }
-        });
-
-        document.getElementById('protectBtn').addEventListener('click', async () => {
-            const status = document.getElementById('protectStatus');
-            status.className = "mt-4 text-center text-slate-600 block animate-pulse font-bold";
-            status.textContent = "Loading WebAssembly encryption engine...";
-            
-            try {
-                const qpdf = await getQPDF();
-                status.textContent = "Applying 256-bit AES Encryption...";
-                
-                const userPw = document.getElementById('protectUserPw').value;
-                const ownerPw = document.getElementById('protectOwnerPw').value || userPw;
-                
-                const noPrint = document.getElementById('cbNoPrint').checked;
-                const noCopy = document.getElementById('cbNoCopy').checked;
-                const noEdit = document.getElementById('cbNoEdit').checked;
-                
-                if(!userPw) { alert("Please enter a user password."); return; }
-
-                const arrayBuffer = await protectFile.arrayBuffer();
-                qpdf.FS.writeFile('/protect_in.pdf', new Uint8Array(arrayBuffer));
-                
-                // Build the QPDF arguments array dynamically
-                let args = ['--encrypt', userPw, ownerPw, '256'];
-                if (noPrint) args.push('--print=none');
-                if (noCopy) args.push('--extract=n');
-                if (noEdit) args.push('--modify=none');
-                args.push('--', '/protect_in.pdf', '/protect_out.pdf');
-                
-                try {
-                    qpdf.callMain(args);
-                    const outBytes = qpdf.FS.readFile('/protect_out.pdf');
-                    triggerDownload(outBytes, 'Protected.pdf');
-                    
-                    status.className = "mt-4 text-center text-green-600 block font-bold";
-                    status.textContent = "✅ PDF Protected Successfully!";
-                } catch(err) {
-                    status.className = "mt-4 text-center text-red-600 block font-bold";
-                    status.textContent = "❌ Error applying encryption.";
-                }
-            } catch(e) {
-                status.className = "mt-4 text-center text-red-600 block font-bold";
-                status.textContent = "❌ Failed to load encryption engine.";
-            }
-        });
-
-        // --- Hidden Original Tools Logic (Merge, Split, Watermark, etc.) ---
-        // I have removed the long JS logic for the other tools to keep this response 
-        // manageable, but they function identically to the previous version!
-
-        // Configure PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const signaturePad = new SignaturePad(document.getElementById('sigCanvas'), { penColor: "rgb(17, 24, 39)", backgroundColor: "rgba(255, 255, 255, 0)" });
 
         // ==========================================
-        // PDF TO IMAGES LOGIC
+        // TOOL LOGIC
         // ==========================================
-        document.getElementById('pdfToImgInput').addEventListener('change', (e) => {
-            if(e.target.files.length) document.getElementById('pdfToImgBtn').classList.remove('hidden');
+
+        // --- MERGE ---
+        new Sortable(document.getElementById('mergeFileList'), { animation: 150 });
+        document.getElementById('mergeFileInput').addEventListener('change', (e) => {
+            if(!e.target.files.length) return;
+            const list = document.getElementById('mergeFileList'); list.innerHTML = '';
+            Array.from(e.target.files).filter(f => f.type === 'application/pdf').forEach(f => {
+                const li = document.createElement('li'); li.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center";
+                li.innerHTML = `<span class="truncate pr-4"><span class="text-gray-400 mr-2">☰</span> ${f.name}</span> <span class="text-xs text-gray-400 whitespace-nowrap">${(f.size/1024/1024).toFixed(2)} MB</span>`; li.fileData = f; list.appendChild(li);
+            });
+            enableTool('merge');
         });
-
-        document.getElementById('pdfToImgBtn').addEventListener('click', async () => {
-            const file = document.getElementById('pdfToImgInput').files[0];
-            const status = document.getElementById('pdfToImgStatus');
-            status.className = "mt-4 text-center text-pink-600 block animate-pulse font-bold";
-            
+        document.getElementById('mergeBtn').addEventListener('click', async () => {
+            const files = Array.from(document.getElementById('mergeFileList').children).map(li => li.fileData);
+            updateStatus('merge', 'processing', 'Merging documents...');
             try {
-                status.textContent = "Loading PDF Engine...";
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-                const zip = new JSZip();
-                
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    status.textContent = `Rendering page ${i} of ${pdf.numPages}...`;
-                    const page = await pdf.getPage(i);
-                    
-                    // Scale 2.0 generates a high-resolution image
-                    const viewport = page.getViewport({ scale: 2.0 }); 
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = viewport.width; canvas.height = viewport.height;
-                    
-                    await page.render({ canvasContext: ctx, viewport }).promise;
-                    
-                    // Convert canvas to JPG, strip the data URL prefix, and add to ZIP
-                    const imgData = canvas.toDataURL('image/jpeg', 0.9).split('base64,')[1];
-                    zip.file(`page_${i}.jpg`, imgData, { base64: true });
+                const doc = await PDFLib.PDFDocument.create();
+                for (let f of files) {
+                    const pdf = await PDFLib.PDFDocument.load(await f.arrayBuffer());
+                    const pages = await doc.copyPages(pdf, pdf.getPageIndices());
+                    pages.forEach(p => doc.addPage(p));
                 }
-                
-                status.textContent = "Packaging images into a ZIP file...";
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                triggerDownload(zipBlob, file.name.replace('.pdf', '_images.zip'));
-                
-                status.className = "mt-4 text-center text-green-600 block font-bold";
-                status.textContent = "✅ Conversion complete!";
-            } catch(err) {
-                console.error(err);
-                status.className = "mt-4 text-center text-red-600 block font-bold";
-                status.textContent = "❌ Error: " + err.message;
-            }
+                const filename = getFileName(files[0], 'merged.pdf');
+                triggerDownload(await doc.save(), filename);
+                updateStatus('merge', 'success', '', filename);
+            } catch(e) { updateStatus('merge', 'error', e.message); }
         });
 
-        // ==========================================
-        // E-SIGN PDF LOGIC
-        // ==========================================
-        const sigCanvas = document.getElementById('sigCanvas');
-        // Initialize the drawing pad with blue ink
-        const signaturePad = new SignaturePad(sigCanvas, { penColor: "rgb(0, 0, 200)" }); 
-
-        document.getElementById('signInput').addEventListener('change', (e) => {
-            if(e.target.files.length) document.getElementById('signControls').classList.remove('hidden');
+        // --- SPLIT ---
+        let splitFile;
+        document.getElementById('splitFileInput').addEventListener('change', async (e) => {
+            if(!e.target.files.length) return; splitFile = e.target.files[0];
+            const pdf = await PDFLib.PDFDocument.load(await splitFile.arrayBuffer());
+            const max = pdf.getPageCount();
+            document.getElementById('splitStartPage').max = max; document.getElementById('splitStartPage').value = 1;
+            document.getElementById('splitEndPage').max = max; document.getElementById('splitEndPage').value = max;
+            enableTool('split');
         });
-
-        document.getElementById('clearSigBtn').addEventListener('click', () => signaturePad.clear());
-
-        document.getElementById('applySigBtn').addEventListener('click', async () => {
-            if (signaturePad.isEmpty()) return alert("Please draw a signature first.");
-            
-            const status = document.getElementById('signStatus');
-            status.className = "mt-4 text-center text-indigo-600 block animate-pulse font-bold";
-            status.textContent = "Stamping signature onto PDF...";
-            
+        document.getElementById('splitBtn').addEventListener('click', async () => {
+            updateStatus('split', 'processing', 'Extracting pages...');
             try {
-                const file = document.getElementById('signInput').files[0];
-                const arrayBuffer = await file.arrayBuffer();
-                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                
-                // 1. Get the signature drawing as a transparent PNG
-                const sigPngDataUrl = signaturePad.toDataURL("image/png");
-                const pngImage = await pdfDoc.embedPng(sigPngDataUrl);
-                
-                // 2. Stamp it on the first page
-                const pages = pdfDoc.getPages();
-                const firstPage = pages[0];
-                const { width, height } = firstPage.getSize();
-                
-                // Scale the signature to a reasonable size
-                const pngDims = pngImage.scale(0.3);
-                
-                // Draw in the bottom right corner (30px margin)
-                firstPage.drawImage(pngImage, {
-                    x: width - pngDims.width - 30,
-                    y: 30,
-                    width: pngDims.width,
-                    height: pngDims.height
+                const start = parseInt(document.getElementById('splitStartPage').value);
+                const end = parseInt(document.getElementById('splitEndPage').value);
+                const orig = await PDFLib.PDFDocument.load(await splitFile.arrayBuffer());
+                const newDoc = await PDFLib.PDFDocument.create();
+                const pages = await newDoc.copyPages(orig, Array.from({length: end - start + 1}, (_, i) => start - 1 + i));
+                pages.forEach(p => newDoc.addPage(p));
+                const filename = getFileName(splitFile, `p${start}-${end}.pdf`);
+                triggerDownload(await newDoc.save(), filename);
+                updateStatus('split', 'success', '', filename);
+            } catch(e) { updateStatus('split', 'error', e.message); }
+        });
+
+        // --- IMG TO PDF ---
+        new Sortable(document.getElementById('imgFileList'), { animation: 150 });
+        document.getElementById('imgFileInput').addEventListener('change', (e) => {
+            if(!e.target.files.length) return;
+            const list = document.getElementById('imgFileList'); list.innerHTML = '';
+            Array.from(e.target.files).filter(f => f.type.startsWith('image/')).forEach(f => {
+                const li = document.createElement('li'); li.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between";
+                li.innerHTML = `<span><span class="text-gray-400 mr-2">☰</span> ${f.name}</span>`; li.fileData = f; list.appendChild(li);
+            });
+            enableTool('img');
+        });
+        document.getElementById('imgBtn').addEventListener('click', async () => {
+            const files = Array.from(document.getElementById('imgFileList').children).map(li => li.fileData);
+            updateStatus('img', 'processing');
+            try {
+                const doc = await PDFLib.PDFDocument.create();
+                for (let f of files) {
+                    const bytes = await f.arrayBuffer();
+                    const img = f.type === 'image/jpeg' ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
+                    const dims = img.scale(1);
+                    const page = doc.addPage([dims.width, dims.height]);
+                    page.drawImage(img, {x: 0, y: 0, width: dims.width, height: dims.height});
+                }
+                const filename = getFileName(files[0], 'converted.pdf');
+                triggerDownload(await doc.save(), filename);
+                updateStatus('img', 'success', '', filename);
+            } catch(e) { updateStatus('img', 'error', e.message); }
+        });
+
+        // --- WATERMARK ---
+        let wmFile;
+        document.getElementById('wmFileInput').addEventListener('change', (e) => { if(e.target.files.length){ wmFile = e.target.files[0]; enableTool('wm'); }});
+        document.getElementById('wmBtn').addEventListener('click', async () => {
+            updateStatus('wm', 'processing');
+            try {
+                const doc = await PDFLib.PDFDocument.load(await wmFile.arrayBuffer());
+                const text = document.getElementById('wmTextInput').value;
+                doc.getPages().forEach(page => {
+                    const { width, height } = page.getSize();
+                    page.drawText(text, { x: width/2 - 150, y: height/2, size: 50, opacity: 0.15, rotate: PDFLib.degrees(45), color: PDFLib.rgb(0,0,0) });
+                });
+                const filename = getFileName(wmFile, 'watermarked.pdf');
+                triggerDownload(await doc.save(), filename);
+                updateStatus('wm', 'success', '', filename);
+            } catch(e) { updateStatus('wm', 'error', e.message); }
+        });
+
+        // --- NUMBERING (UPGRADED) ---
+        let numFile;
+        document.getElementById('numFileInput').addEventListener('change', (e) => { if(e.target.files.length){ numFile = e.target.files[0]; enableTool('num'); }});
+        document.getElementById('numBtn').addEventListener('click', async () => {
+            updateStatus('num', 'processing');
+            try {
+                const doc = await PDFLib.PDFDocument.load(await numFile.arrayBuffer());
+                const vPos = document.getElementById('numVPos').value;
+                const hPos = document.getElementById('numHPos').value;
+                const fontSize = 12;
+
+                doc.getPages().forEach((page, idx) => {
+                    const text = `Page ${idx + 1}`;
+                    const { width, height } = page.getSize();
+                    
+                    // Approximate text width (size * ~0.55 per character)
+                    const textWidth = fontSize * 0.55 * text.length; 
+                    
+                    let x = 30; // Default left
+                    if (hPos === 'center') x = (width - textWidth) / 2;
+                    if (hPos === 'right') x = width - textWidth - 30;
+
+                    let y = 30; // Default bottom
+                    if (vPos === 'top') y = height - fontSize - 30;
+
+                    page.drawText(text, { x, y, size: fontSize, color: PDFLib.rgb(0.2, 0.2, 0.2) });
                 });
                 
-                triggerDownload(await pdfDoc.save(), 'Signed_Document.pdf');
-                
-                status.className = "mt-4 text-center text-green-600 block font-bold";
-                status.textContent = "✅ Document signed successfully!";
-            } catch (err) {
-                console.error(err);
-                status.className = "mt-4 text-center text-red-600 block font-bold";
-                status.textContent = "❌ Error: " + err.message;
-            }
+                const filename = getFileName(numFile, 'numbered.pdf');
+                triggerDownload(await doc.save(), filename);
+                updateStatus('num', 'success', '', filename);
+            } catch(e) { updateStatus('num', 'error', e.message); }
         });
+
+        // --- METADATA ---
+        let metaDoc, metaFile;
+        document.getElementById('metaFileInput').addEventListener('change', async (e) => {
+            if(!e.target.files.length) return; metaFile = e.target.files[0];
+            metaDoc = await PDFLib.PDFDocument.load(await metaFile.arrayBuffer());
+            document.getElementById('metaTitle').value = metaDoc.getTitle() || '';
+            document.getElementById('metaAuthor').value = metaDoc.getAuthor() || '';
+            document.getElementById('metaSubject').value = metaDoc.getSubject() || '';
+            enableTool('meta');
+        });
+        document.getElementById('metaBtn').addEventListener('click', async () => {
+            updateStatus('meta', 'processing');
+            try {
+                metaDoc.setTitle(document.getElementById('metaTitle').value);
+                metaDoc.setAuthor(document.getElementById('metaAuthor').value);
+                metaDoc.setSubject(document.getElementById('metaSubject').value);
+                const filename = getFileName(metaFile, 'updated.pdf');
+                triggerDownload(await metaDoc.save(), filename);
+                updateStatus('meta', 'success', '', filename);
+            } catch(e) { updateStatus('meta', 'error', e.message); }
+        });
+
+        // --- UNLOCK ---
+        let unlockFile;
+        document.getElementById('unlockFileInput').addEventListener('change', (e) => { if(e.target.files.length){ unlockFile = e.target.files[0]; enableTool('unlock'); }});
+        document.getElementById('unlockBtn').addEventListener('click', async () => {
+            updateStatus('unlock', 'processing', 'Decrypting offline...');
+            try {
+                const qpdf = await getQPDF();
+                const pwd = document.getElementById('unlockPwd').value;
+                qpdf.FS.writeFile('/un_in.pdf', new Uint8Array(await unlockFile.arrayBuffer()));
+                qpdf.callMain(['--password=' + pwd, '--decrypt', '/un_in.pdf', '/un_out.pdf']);
+                
+                const filename = getFileName(unlockFile, 'unlocked.pdf');
+                triggerDownload(qpdf.FS.readFile('/un_out.pdf'), filename);
+                updateStatus('unlock', 'success', '', filename);
+            } catch(e) { updateStatus('unlock', 'error', "Incorrect password or corrupted file."); }
+        });
+
+        // --- PROTECT ---
+        let protectFile;
+        document.getElementById('protectFileInput').addEventListener('change', (e) => { if(e.target.files.length){ protectFile = e.target.files[0]; enableTool('protect'); }});
+        document.getElementById('protectBtn').addEventListener('click', async () => {
+            const userPw = document.getElementById('protectUserPw').value;
+            if(!userPw) return alert("User password is required!");
+            updateStatus('protect', 'processing', 'Encrypting (AES-256)...');
+            try {
+                const qpdf = await getQPDF();
+                qpdf.FS.writeFile('/pr_in.pdf', new Uint8Array(await protectFile.arrayBuffer()));
+                
+                let args = ['--encrypt', userPw, document.getElementById('protectOwnerPw').value || userPw, '256'];
+                if (document.getElementById('cbNoPrint').checked) args.push('--print=none');
+                if (document.getElementById('cbNoCopy').checked) args.push('--extract=n');
+                if (document.getElementById('cbNoEdit').checked) args.push('--modify=none');
+                args.push('--', '/pr_in.pdf', '/pr_out.pdf');
+                
+                qpdf.callMain(args);
+                const filename = getFileName(protectFile, 'protected.pdf');
+                triggerDownload(qpdf.FS.readFile('/pr_out.pdf'), filename);
+                updateStatus('protect', 'success', '', filename);
+            } catch(e) { updateStatus('protect', 'error', "Failed to encrypt file."); }
+        });
+
+        // --- PDF TO IMG ---
+        let pdfImgFile;
+        document.getElementById('pdfImgFileInput').addEventListener('change', (e) => { if(e.target.files.length){ pdfImgFile = e.target.files[0]; enableTool('pdfImg'); }});
+        document.getElementById('pdfImgBtn').addEventListener('click', async () => {
+            updateStatus('pdfImg', 'processing', 'Rendering pages...');
+            try {
+                const pdf = await pdfjsLib.getDocument(await pdfImgFile.arrayBuffer()).promise;
+                const zip = new JSZip();
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 2.0 }); 
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width; canvas.height = viewport.height;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                    zip.file(`page_${i}.jpg`, canvas.toDataURL('image/jpeg', 0.9).split('base64,')[1], { base64: true });
+                }
+                const filename = getFileName(pdfImgFile, 'images.zip');
+                triggerDownload(await zip.generateAsync({ type: 'blob' }), filename);
+                updateStatus('pdfImg', 'success', '', filename);
+            } catch(e) { updateStatus('pdfImg', 'error', e.message); }
+        });
+
+        // --- E-SIGN (UPGRADED) ---
+        let signFile;
+        document.getElementById('signFileInput').addEventListener('change', (e) => { if(e.target.files.length){ signFile = e.target.files[0]; enableTool('sign'); }});
+        document.getElementById('signBtn').addEventListener('click', async () => {
+            if(signaturePad.isEmpty()) return alert("Please draw a signature first.");
+            updateStatus('sign', 'processing', 'Stamping signature...');
+            try {
+                const doc = await PDFLib.PDFDocument.load(await signFile.arrayBuffer());
+                const img = await doc.embedPng(signaturePad.toDataURL("image/png"));
+                
+                // Read position inputs
+                const vPos = document.getElementById('signVPos').value;
+                const hPos = document.getElementById('signHPos').value;
+                
+                const pages = doc.getPages();
+                
+                // Currently stamping on the first page, but can be looped for all pages
+                const page = pages[0]; 
+                const { width, height } = page.getSize();
+                
+                // Scale signature image
+                const dims = img.scale(0.3);
+                
+                // Calculate X coordinate
+                let x = 30; // Default Left
+                if (hPos === 'center') x = (width - dims.width) / 2;
+                if (hPos === 'right') x = width - dims.width - 30;
+                
+                // Calculate Y coordinate
+                let y = 30; // Default Bottom
+                if (vPos === 'middle') y = (height - dims.height) / 2;
+                if (vPos === 'top') y = height - dims.height - 30;
+                
+                // Draw image at calculated coordinates
+                page.drawImage(img, { x, y, width: dims.width, height: dims.height });
+                
+                const filename = getFileName(signFile, 'signed.pdf');
+                triggerDownload(await doc.save(), filename);
+                updateStatus('sign', 'success', '', filename);
+            } catch(e) { updateStatus('sign', 'error', e.message); }
+        });
+
     </script>
 </body>
 </html>
