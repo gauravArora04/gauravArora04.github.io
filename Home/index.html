@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free Home Loan EMI Calculator with Prepayment & Savings (India)</title>
-    <meta name="description" content="Calculate your home loan EMI, see your amortization schedule, and discover how much you can save with extra payments and annual EMI increases. 100% free and instant.">
+    <title>Free Home Loan EMI Calculator with Prepayment & Floating Rate Simulator (India)</title>
+    <meta name="description" content="Calculate your home loan EMI, simulate floating interest rate changes, schedule custom prepayments, view collapsible FY schedules, and export to PDF or Excel.">
     <meta name="google-site-verification" content="ql8ItaHWWYGchKXn8eC7XwHO1K8R4llNtESAsaeJ9x8" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsPDF & AutoTable for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,124 +17,389 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Custom styles for the range slider */
+        /* Custom styles for range sliders */
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: #2563eb;
             cursor: pointer;
             border-radius: 50%;
-            margin-top: -6px;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            margin-top: -5px;
         }
         input[type=range]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: #2563eb;
             cursor: pointer;
             border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        /* Custom scrollbar for amortization table */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-slate-50 text-slate-800 antialiased">
 
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-blue-700">Home Loan EMI Calculator</h1>
-            <p class="text-gray-600 mt-2">Plan your loan repayment and see how much you can save.</p>
+    <!-- Toast Notification for Share Link / Exports -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transition-all">
+        <span id="toast-message">Link copied to clipboard!</span>
+    </div>
+
+    <!-- Full-Width Wrapper -->
+    <div class="w-full px-3 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Header with Export & Share Actions -->
+        <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 pb-4 border-b border-slate-200 gap-4">
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <span class="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold tracking-wide uppercase">Smart Prepayment & Rate Planner</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Home Loan EMI & Prepayment Calculator</h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Simulate extra EMIs, custom prepayments, floating repo rate changes, and financial year schedules.</p>
+            </div>
+
+            <!-- Action Buttons: Share, CSV, PDF -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <button type="button" id="shareLinkBtn" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-blue-400 transition shadow-sm">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    Share Plan Link
+                </button>
+                <button type="button" id="exportCsvBtn" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 transition shadow-sm">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Export Excel (CSV)
+                </button>
+                <button type="button" id="exportPdfBtn" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Download PDF Report
+                </button>
+            </div>
         </header>
 
         <main class="space-y-8">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Input Form Section -->
-                <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
-                    <form id="emi-form" onsubmit="return false;">
-                        <h2 class="text-2xl font-semibold mb-6 border-b pb-3 text-gray-700">Loan Details</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- LEFT COLUMN: Input Form Section (4 cols on XL screens, 5 cols on LG screens) -->
+                <div class="lg:col-span-5 xl:col-span-4 space-y-6">
+                    
+                    <!-- 1. Basic Loan Details Card -->
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h2 class="text-lg font-bold mb-5 pb-3 border-b border-slate-100 text-slate-800 flex items-center justify-between">
+                            <span>1. Loan Details</span>
+                            <span id="amount-in-words" class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">₹ 50.00 Lakhs</span>
+                        </h2>
                         
-                        <div class="space-y-6">
+                        <form id="emi-form" onsubmit="return false;" class="space-y-5">
+                            <!-- Loan Amount -->
                             <div>
-                                <label for="loanAmount" class="block text-sm font-medium text-gray-700 mb-1">Loan Amount (₹)</label>
-                                <input type="number" id="loanAmount" value="5000000" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            </div>
-
-                            <div>
-                                <label for="interestRate" class="block text-sm font-medium text-gray-700 mb-1">Interest Rate (%)</label>
-                                <div class="flex items-center space-x-4">
-                                    <input type="range" id="interestRateSlider" min="5" max="15" step="0.05" value="8.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                    <input type="number" id="interestRate" min="5" max="15" step="0.05" value="8.5" class="w-24 p-3 bg-gray-100 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                <div class="flex justify-between text-sm font-medium mb-1.5">
+                                    <label for="loanAmount" class="text-slate-700">Loan Amount (₹)</label>
+                                </div>
+                                <input type="number" id="loanAmount" value="5000000" step="50000" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition mb-2">
+                                <input type="range" id="loanAmountSlider" min="100000" max="50000000" step="50000" value="5000000" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                                <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                                    <span>₹1L</span>
+                                    <span>₹1Cr</span>
+                                    <span>₹2.5Cr</span>
+                                    <span>₹5Cr</span>
                                 </div>
                             </div>
 
+                            <!-- Interest Rate -->
                             <div>
-                                <label for="tenure" class="block text-sm font-medium text-gray-700 mb-1">Loan Tenure (Years)</label>
-                                <input type="number" id="tenure" value="20" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <label for="interestRate" class="text-sm font-medium text-slate-700">Initial Interest Rate (% p.a.)</label>
+                                    <div class="relative w-28">
+                                        <input type="number" id="interestRate" min="1" max="25" step="0.05" value="8.5" class="w-full p-2 pr-7 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-right text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
+                                        <span class="absolute right-2.5 top-2 text-slate-400 font-medium">%</span>
+                                    </div>
+                                </div>
+                                <input type="range" id="interestRateSlider" min="5" max="15" step="0.05" value="8.5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                                <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                                    <span>5%</span>
+                                    <span>8.5%</span>
+                                    <span>12%</span>
+                                    <span>15%</span>
+                                </div>
+                            </div>
+
+                            <!-- Tenure & Start Date -->
+                            <div class="grid grid-cols-2 gap-4 pt-1">
+                                <div>
+                                    <label for="tenure" class="block text-sm font-medium text-slate-700 mb-1.5">Tenure (Years)</label>
+                                    <input type="number" id="tenure" value="20" min="1" max="40" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
+                                </div>
+                                <div>
+                                    <label for="startDate" class="block text-sm font-medium text-slate-700 mb-1.5">Start Month</label>
+                                    <input type="month" id="startDate" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 2. Prepayment Strategy Card -->
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h2 class="text-lg font-bold text-slate-800">2. Extra EMI & Prepayments</h2>
+                            <button type="button" id="resetPrepaymentsBtn" class="text-xs font-medium text-rose-600 hover:text-rose-700 hidden">Reset All</button>
+                        </div>
+
+                        <!-- A. Recurring Extra Payment Mode -->
+                        <div class="space-y-4">
+                            <label class="block text-sm font-semibold text-slate-700">Recurring Prepayment Frequency</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-100 p-1.5 rounded-xl">
+                                <button type="button" data-mode="none" class="freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition bg-white text-blue-700 shadow-sm">None</button>
+                                <button type="button" data-mode="monthly" class="freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900">Monthly</button>
+                                <button type="button" data-mode="yearly" class="freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900">Yearly</button>
+                                <button type="button" data-mode="custom_months" class="freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900">Select Months</button>
+                            </div>
+
+                            <!-- Dynamic Recurring Options Container -->
+                            <div id="recurring-options-container" class="hidden space-y-4 bg-blue-50/60 p-4 rounded-xl border border-blue-100">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <label for="recurringExtraAmount" class="text-xs font-semibold text-slate-700 uppercase tracking-wider">Extra Amount per Selected Period (₹)</label>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <input type="number" id="recurringExtraAmount" value="0" min="0" step="1000" placeholder="Enter amount" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 transition">
+                                        <button type="button" id="setOneEmiBtn" title="Set equal to 1 standard Monthly EMI" class="shrink-0 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition shadow-sm whitespace-nowrap">
+                                            = 1 EMI
+                                        </button>
+                                    </div>
+                                    <p id="recurring-helper-text" class="text-[11px] text-slate-500 mt-1.5"></p>
+                                </div>
+
+                                <!-- Yearly Month Picker -->
+                                <div id="yearly-month-picker" class="hidden">
+                                    <label for="yearlyPaymentMonth" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Which Month Each Year?</label>
+                                    <select id="yearlyPaymentMonth" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500">
+                                        <option value="0">January</option>
+                                        <option value="1">February</option>
+                                        <option value="2" selected>March (Financial Year End)</option>
+                                        <option value="3">April (Bonus Month)</option>
+                                        <option value="4">May</option>
+                                        <option value="5">June</option>
+                                        <option value="6">July</option>
+                                        <option value="7">August</option>
+                                        <option value="8">September</option>
+                                        <option value="9">October (Festive Month)</option>
+                                        <option value="10">November</option>
+                                        <option value="11">December</option>
+                                    </select>
+                                </div>
+
+                                <!-- Specific Months Grid -->
+                                <div id="custom-months-picker" class="hidden">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Select Months to Pay Extra Every Year</label>
+                                        <div class="space-x-2">
+                                            <button type="button" id="selectQuarterlyBtn" class="text-[11px] text-blue-600 font-semibold hover:underline">Quarterly</button>
+                                            <button type="button" id="clearMonthsBtn" class="text-[11px] text-slate-500 hover:underline">Clear</button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-4 gap-2" id="months-grid"></div>
+                                </div>
                             </div>
                         </div>
 
-                        <h3 class="text-xl font-semibold mt-8 mb-4 border-b pb-3 text-gray-700">Prepayment Options</h3>
-                        <div class="space-y-6">
-                             <div>
-                                <label for="extraInstallments" class="block text-sm font-medium text-gray-700 mb-1">Extra EMIs per Year</label>
-                                <input type="number" id="extraInstallments" value="0" min="0" max="12" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        <!-- B. Annual EMI Step-Up -->
+                        <div class="pt-3 border-t border-slate-100">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="emiIncrease" class="text-sm font-semibold text-slate-700">Annual EMI Step-Up (%)</label>
+                                <span class="text-xs text-slate-500">Increase EMI every 12 mos</span>
                             </div>
-                            <div>
-                                <label for="emiIncrease" class="block text-sm font-medium text-gray-700 mb-1">Annual EMI Increase (%)</label>
-                                <input type="number" id="emiIncrease" value="0" min="0" max="25" class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <div class="flex items-center space-x-3">
+                                <input type="range" id="emiIncreaseSlider" min="0" max="25" step="1" value="0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                                <div class="relative w-24 shrink-0">
+                                    <input type="number" id="emiIncrease" value="0" min="0" max="50" class="w-full p-2 pr-6 bg-slate-50 border border-slate-300 rounded-xl text-center font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
+                                    <span class="absolute right-2.5 top-2 text-slate-400 text-sm">%</span>
+                                </div>
                             </div>
                         </div>
-                    </form>
+
+                        <!-- C. Custom One-Time / Ad-Hoc Monthly Payments -->
+                        <div class="pt-3 border-t border-slate-100 space-y-3">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700">Custom Lump Sum in Specific Month(s)</label>
+                                <p class="text-xs text-slate-500">Add below OR type directly into the <strong>"Extra Paid"</strong> column in the table.</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-1/3">
+                                    <input type="number" id="customMonthInput" min="1" placeholder="Month #" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div class="w-2/3 flex gap-2">
+                                    <input type="number" id="customAmountInput" min="0" step="5000" placeholder="Amount (₹)" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500">
+                                    <button type="button" id="addCustomPaymentBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl transition shrink-0">Add</button>
+                                </div>
+                            </div>
+                            <div id="custom-payments-tags" class="flex flex-wrap gap-2 pt-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Floating Interest Rate / Repo Rate Simulator Card -->
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-800">3. Floating Rate Reset Simulator</h2>
+                                <p class="text-xs text-slate-500">Simulate RBI repo rate hikes or cuts during your loan tenure.</p>
+                            </div>
+                            <button type="button" id="clearRateChangesBtn" class="text-xs font-medium text-rose-600 hover:text-rose-700 hidden">Clear</button>
+                        </div>
+
+                        <div class="flex gap-2 items-end">
+                            <div class="w-5/12">
+                                <label for="rateChangeMonthInput" class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">From Month #</label>
+                                <input type="number" id="rateChangeMonthInput" min="2" placeholder="e.g. 25" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="w-5/12">
+                                <label for="rateChangeValueInput" class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">New Rate (%)</label>
+                                <input type="number" id="rateChangeValueInput" min="1" max="25" step="0.05" placeholder="e.g. 7.75" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <button type="button" id="addRateChangeBtn" class="w-2/12 py-2.5 px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition shrink-0">
+                                Add
+                            </button>
+                        </div>
+
+                        <!-- Quick Preset Scenarios -->
+                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                            <span class="text-[11px] text-slate-400 font-medium mr-1">Quick Presets:</span>
+                            <button type="button" data-preset="cut" class="rate-preset-btn text-[11px] px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-medium transition">
+                                -0.50% Cut in Yr 2
+                            </button>
+                            <button type="button" data-preset="hike" class="rate-preset-btn text-[11px] px-2 py-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 font-medium transition">
+                                +0.50% Hike in Yr 2
+                            </button>
+                        </div>
+
+                        <!-- Active Rate Change Tags -->
+                        <div id="rate-changes-tags" class="flex flex-wrap gap-2 pt-1"></div>
+                    </div>
                 </div>
 
-                <!-- Results and Amortization Section -->
-                <div class="lg:col-span-2 space-y-8">
-                    <!-- Summary Section -->
-                    <div id="results-summary" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hidden">
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Loan Summary</h2>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-                            <div class="bg-blue-50 p-4 rounded-lg">
-                                <p class="text-sm text-blue-800 font-medium">Monthly EMI</p>
-                                <p id="monthly-emi" class="text-xl font-bold text-blue-900"></p>
+                <!-- RIGHT COLUMN: Results & Schedule Section (8 cols on XL screens, 7 cols on LG screens) -->
+                <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                    
+                    <!-- Summary Card -->
+                    <div id="results-summary" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">Repayment Summary</h2>
+                                <p id="payoff-date-banner" class="text-xs font-medium text-slate-500 mt-0.5">Estimated Payoff: —</p>
                             </div>
-                            <div class="bg-gray-100 p-4 rounded-lg">
-                                <p class="text-sm text-gray-600 font-medium">Principal Amount</p>
-                                <p id="principal-amount" class="text-xl font-bold text-gray-800"></p>
+                            <div class="bg-blue-50 border border-blue-200 px-4 py-2 rounded-xl text-right">
+                                <span class="text-xs text-blue-700 font-semibold uppercase tracking-wider block">Initial Monthly EMI</span>
+                                <span id="monthly-emi" class="text-2xl font-extrabold text-blue-900">₹0</span>
                             </div>
-                            <div class="bg-gray-100 p-4 rounded-lg">
-                                <p class="text-sm text-gray-600 font-medium">Total Interest</p>
-                                <p id="total-interest" class="text-xl font-bold text-gray-800"></p>
+                        </div>
+
+                        <!-- Key Metrics Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
+                            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+                                <p class="text-xs text-slate-500 font-medium">Principal Amount</p>
+                                <p id="principal-amount" class="text-lg font-bold text-slate-800 mt-1">₹0</p>
                             </div>
-                            <div class="bg-gray-100 p-4 rounded-lg col-span-2 md:col-span-1">
-                                <p class="text-sm text-gray-600 font-medium">Total Payment</p>
-                                <p id="total-payment" class="text-xl font-bold text-gray-800"></p>
+                            <div class="p-4 rounded-xl bg-amber-50/70 border border-amber-200/80">
+                                <p class="text-xs text-amber-800 font-medium">Total Interest Payable</p>
+                                <p id="total-interest" class="text-lg font-bold text-amber-900 mt-1">₹0</p>
+                                <p id="original-interest-sub" class="text-[11px] text-amber-700/80 mt-0.5 hidden">Orig: ₹0</p>
                             </div>
-                             <div class="bg-green-50 p-4 rounded-lg">
-                                <p class="text-sm text-green-800 font-medium">Total Savings</p>
-                                <p id="total-savings" class="text-xl font-bold text-green-900"></p>
+                            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 col-span-2 sm:col-span-1">
+                                <p class="text-xs text-slate-500 font-medium">Total Amount Payable</p>
+                                <p id="total-payment" class="text-lg font-bold text-slate-800 mt-1">₹0</p>
+                                <p id="extra-paid-sub" class="text-[11px] text-blue-600 font-medium mt-0.5 hidden">Includes ₹0 prepaid</p>
                             </div>
-                            <div class="bg-green-50 p-4 rounded-lg">
-                                <p class="text-sm text-green-800 font-medium">Time Saved</p>
-                                <p id="time-saved" class="text-xl font-bold text-green-900"></p>
+                            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                                <p class="text-xs text-emerald-800 font-semibold">Net Interest Saved</p>
+                                <p id="total-savings" class="text-lg font-extrabold text-emerald-950 mt-1">₹0</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-teal-50 border border-teal-200">
+                                <p class="text-xs text-teal-800 font-semibold">Tenure Time Saved</p>
+                                <p id="time-saved" class="text-lg font-extrabold text-teal-950 mt-1">0 months</p>
+                                <p id="revised-tenure-sub" class="text-[11px] text-teal-700 mt-0.5">Actual: 20 yrs</p>
+                            </div>
+                        </div>
+
+                        <!-- Visual Breakdown Stacked Bar -->
+                        <div class="space-y-2 pt-1">
+                            <div class="flex justify-between text-xs font-medium text-slate-600">
+                                <span>Loan Outflow Breakdown (vs Original Baseline Cost)</span>
+                                <span id="interest-ratio-text">Interest: 0%</span>
+                            </div>
+                            <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden flex">
+                                <div id="bar-principal" class="bg-blue-600 h-full transition-all duration-300" style="width: 50%" title="Principal"></div>
+                                <div id="bar-interest" class="bg-amber-500 h-full transition-all duration-300" style="width: 50%" title="Interest Paid"></div>
+                                <div id="bar-saved" class="bg-emerald-400 h-full transition-all duration-300" style="width: 0%" title="Interest Saved"></div>
+                            </div>
+                            <div class="flex flex-wrap gap-4 text-xs text-slate-600 pt-1">
+                                <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span> Principal</div>
+                                <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Interest Paid</div>
+                                <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Interest Saved</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Amortization Table Section -->
-                    <div id="amortization-section" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hidden">
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Amortization Schedule</h2>
-                        <div class="overflow-auto max-h-[600px] rounded-lg border">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-100 sticky top-0">
+                    <!-- Interactive Amortization Schedule Card with Yearly Accordion -->
+                    <div id="amortization-section" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-100">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">Interactive Amortization Schedule</h2>
+                                <p class="text-xs text-slate-500">Click any year row to expand/collapse months, or edit <strong>Extra Paid (₹)</strong> directly inside any month.</p>
+                            </div>
+
+                            <!-- Grouping & Accordion Controls -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                <!-- Grouping Mode Pill Switcher -->
+                                <div class="inline-flex bg-slate-100 p-1 rounded-xl">
+                                    <button type="button" data-group="fy" class="group-mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-blue-700 shadow-sm">Financial Year (Apr-Mar)</button>
+                                    <button type="button" data-group="cal" class="group-mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900">Calendar Year</button>
+                                    <button type="button" data-group="flat" class="group-mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900">Flat Monthly</button>
+                                </div>
+
+                                <!-- Expand / Collapse All Buttons -->
+                                <div id="accordion-bulk-btns" class="inline-flex items-center gap-1">
+                                    <button type="button" id="expandAllBtn" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Expand All</button>
+                                    <button type="button" id="collapseAllBtn" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Collapse All</button>
+                                </div>
+
+                                <label class="inline-flex items-center text-xs font-medium text-slate-600 cursor-pointer ml-1">
+                                    <input type="checkbox" id="highlightExtraOnly" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 mr-1.5">
+                                    Prepayment months only
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="overflow-auto max-h-[640px] rounded-xl border border-slate-200 custom-scrollbar">
+                            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                                <thead class="bg-slate-100 sticky top-0 z-20 shadow-sm">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Month</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">EMI Paid</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Principal</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Interest</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Balance</th>
+                                        <th class="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Period / Month</th>
+                                        <th class="px-3 py-3 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">Rate</th>
+                                        <th class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Regular EMI</th>
+                                        <th class="px-4 py-3 text-right text-xs font-bold text-blue-700 uppercase tracking-wider bg-blue-50/80">Extra Paid (₹)</th>
+                                        <th class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Principal</th>
+                                        <th class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Interest</th>
+                                        <th class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Balance</th>
                                     </tr>
                                 </thead>
-                                <tbody id="amortization-table-body" class="bg-white divide-y divide-gray-200">
-                                    <!-- JS will populate this -->
+                                <tbody id="amortization-table-body" class="bg-white divide-y divide-slate-100">
+                                    <!-- Populated dynamically via JS -->
                                 </tbody>
                             </table>
                         </div>
@@ -140,53 +408,52 @@
             </div>
 
             <!-- Explanatory Content Sections -->
-            <div class="space-y-8">
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Understanding Your Home Loan</h2>
-                    <p class="text-gray-600 mb-6">A home loan can seem complex, but it breaks down into a few simple parts. This calculator helps you see exactly how your loan works.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="font-bold text-lg text-blue-700 mb-2">Principal</h3>
-                            <p class="text-sm text-gray-700">This is the total amount of money you borrow from the bank to buy your home.</p>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800 mb-2">Understanding Your Home Loan & Floating Rates</h2>
+                        <p class="text-sm text-slate-600 mb-4">Most home loans in India are linked to an external benchmark like the RBI Repo Rate. When rates change or when you make partial prepayments, your principal and tenure adjust automatically.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <h3 class="font-bold text-base text-blue-700 mb-1">Principal</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">The amount borrowed. Every extra rupee you prepay directly reduces this balance.</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <h3 class="font-bold text-base text-blue-700 mb-1">Repo Rate Resets</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">When interest rates drop, a larger portion of your existing EMI goes toward principal, closing your loan faster.</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <h3 class="font-bold text-base text-blue-700 mb-1">FY Planning</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Grouping your loan by Financial Year (Apr–Mar) makes it easy to track annual principal & interest for tax deductions.</p>
+                            </div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="font-bold text-lg text-blue-700 mb-2">Interest</h3>
-                            <p class="text-sm text-gray-700">This is the cost of borrowing the money, expressed as a percentage. You pay this to the bank over the life of the loan.</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="font-bold text-lg text-blue-700 mb-2">Tenure</h3>
-                            <p class="text-sm text-gray-700">This is the total time, in years, you have to repay the loan in full.</p>
-                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-4 rounded-r-xl" role="alert">
+                        <p class="font-bold text-sm">The Power of Prepayment: Save Lakhs!</p>
+                        <p class="mt-1 text-xs leading-relaxed">On a ₹50 Lakh loan for 20 years at 8.5% interest, simply paying <strong>one extra EMI</strong> each year saves over <strong>₹9.3 Lakhs</strong> in interest and closes your loan <strong>3 years and 2 months early!</strong></p>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">The Power of Prepayment: Save Lakhs!</h2>
-                    <p class="text-gray-600 mb-4">Making small extra payments on your home loan can have a massive impact. By paying more than your required EMI, you reduce the principal amount faster. Since interest is calculated on the outstanding principal, this simple strategy can save you a significant amount of money and help you become debt-free years earlier.</p>
-                    <div class="bg-green-50 border-l-4 border-green-500 text-green-800 p-4 rounded-lg" role="alert">
-                        <p class="font-bold">Consider this example:</p>
-                        <p class="mt-2 text-sm">On a ₹50 Lakh loan for 20 years at 8.5% interest, simply paying **one extra EMI** each year could help you save over **₹7 Lakhs** in interest and pay off your loan almost **3.5 years early!** Use the prepayment options in the calculator above to see your own potential savings.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Frequently Asked Questions (FAQ)</h2>
-                    <div class="space-y-6">
-                        <div>
-                            <h3 class="font-semibold text-lg text-gray-700">What is an amortization schedule?</h3>
-                            <p class="text-gray-600 mt-2 text-sm">The table shown in the results is your amortization schedule. It provides a month-by-month breakdown of your loan repayment. You can see exactly how much of each EMI goes towards reducing the principal and how much is paid as interest, along with your remaining balance after every payment.</p>
+                <!-- Frequently Asked Questions -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+                            <h3 class="font-semibold text-sm text-slate-800">How does the Floating Rate Simulator work?</h3>
+                            <p class="text-slate-600 mt-1 text-xs leading-relaxed">Add any future month number and the new interest rate. From that month onward, monthly interest is calculated using the new rate while keeping your regular EMI steady—mirroring how banks adjust your remaining tenure.</p>
                         </div>
-                        <div>
-                            <h3 class="font-semibold text-lg text-gray-700">Can I pay off my home loan early? Are there any charges?</h3>
-                            <p class="text-gray-600 mt-2 text-sm">Yes, you can absolutely pay off your loan early. As per RBI guidelines, there are **no prepayment penalties or foreclosure charges** on floating-rate home loans. This gives you the freedom to pay extra whenever you have surplus funds without any additional cost.</p>
+                        <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+                            <h3 class="font-semibold text-sm text-slate-800">Are there any prepayment charges in India?</h3>
+                            <p class="text-slate-600 mt-1 text-xs leading-relaxed">As per RBI guidelines, banks and HFCs cannot levy prepayment penalties or foreclosure charges on floating-rate home loans taken by individuals for non-business purposes.</p>
                         </div>
-                        <div>
-                            <h3 class="font-semibold text-lg text-gray-700">What is a good interest rate for a home loan?</h3>
-                            <p class="text-gray-600 mt-2 text-sm">Home loan interest rates vary based on the bank, your credit score, and the current economic conditions. Generally, rates offered by public sector banks like SBI or Bank of Baroda are very competitive. A "good" rate is typically the lowest rate you can get based on a strong credit score (usually 750 or above). It's always wise to compare offers from multiple lenders.</p>
+                        <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+                            <h3 class="font-semibold text-sm text-slate-800">How do I share my custom plan?</h3>
+                            <p class="text-slate-600 mt-1 text-xs leading-relaxed">Click <strong>"Share Plan Link"</strong> at the top. It encodes all your inputs, custom prepayments, and rate changes into a link you can bookmark or send on WhatsApp.</p>
                         </div>
-                         <div>
-                            <h3 class="font-semibold text-lg text-gray-700">After a prepayment, should I reduce my EMI or my tenure?</h3>
-                            <p class="text-gray-600 mt-2 text-sm">Most banks will automatically reduce your loan tenure while keeping the EMI the same. This is the most beneficial option as it leads to maximum interest savings. Reducing the EMI provides more monthly cash flow but results in lower overall savings. If your goal is to become debt-free faster and save the most money, keeping the EMI constant and reducing the tenure is the better financial strategy.</p>
+                        <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+                            <h3 class="font-semibold text-sm text-slate-800">After prepaying, reduce EMI or tenure?</h3>
+                            <p class="text-slate-600 mt-1 text-xs leading-relaxed">Always opt to keep your EMI unchanged and reduce the loan tenure. This maximizes interest savings and gets you debt-free much faster.</p>
                         </div>
                     </div>
                 </div>
@@ -196,219 +463,984 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- DOM Element References ---
+            // --- Constants & State ---
+            const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            let prepaymentMode = 'none'; // 'none' | 'monthly' | 'yearly' | 'custom_months'
+            let selectedRecurringMonths = new Set([2]); // 0-indexed (0 = Jan, 2 = Mar)
+            let customMonthlyOverrides = {}; // { monthNumber (1-based): amount }
+            let rateChanges = {}; // { monthNumber (1-based): annualRatePercent }
+            let tableGroupMode = 'fy'; // 'fy' | 'cal' | 'flat'
+            let expandedGroups = new Set(); // Stores group keys that are currently expanded
+            let isFirstRender = true;
+
+            let currentBaseEmi = 0;
+            let lastCalculatedStandard = null;
+            let lastCalculatedAdvanced = null;
+
+            // --- DOM Elements ---
             const loanAmountEl = document.getElementById('loanAmount');
+            const loanAmountSliderEl = document.getElementById('loanAmountSlider');
+            const amountInWordsEl = document.getElementById('amount-in-words');
             const interestRateEl = document.getElementById('interestRate');
             const interestRateSliderEl = document.getElementById('interestRateSlider');
             const tenureEl = document.getElementById('tenure');
-            const extraInstallmentsEl = document.getElementById('extraInstallments');
+            const startDateEl = document.getElementById('startDate');
+
+            const freqBtns = document.querySelectorAll('.freq-btn');
+            const recurringContainerEl = document.getElementById('recurring-options-container');
+            const recurringExtraAmountEl = document.getElementById('recurringExtraAmount');
+            const setOneEmiBtn = document.getElementById('setOneEmiBtn');
+            const recurringHelperTextEl = document.getElementById('recurring-helper-text');
+            const yearlyMonthPickerEl = document.getElementById('yearly-month-picker');
+            const yearlyPaymentMonthEl = document.getElementById('yearlyPaymentMonth');
+            const customMonthsPickerEl = document.getElementById('custom-months-picker');
+            const monthsGridEl = document.getElementById('months-grid');
+            const selectQuarterlyBtn = document.getElementById('selectQuarterlyBtn');
+            const clearMonthsBtn = document.getElementById('clearMonthsBtn');
+
             const emiIncreaseEl = document.getElementById('emiIncrease');
-            
-            const resultsSummaryEl = document.getElementById('results-summary');
-            const amortizationSectionEl = document.getElementById('amortization-section');
+            const emiIncreaseSliderEl = document.getElementById('emiIncreaseSlider');
+
+            const customMonthInputEl = document.getElementById('customMonthInput');
+            const customAmountInputEl = document.getElementById('customAmountInput');
+            const addCustomPaymentBtn = document.getElementById('addCustomPaymentBtn');
+            const customPaymentsTagsEl = document.getElementById('custom-payments-tags');
+            const resetPrepaymentsBtn = document.getElementById('resetPrepaymentsBtn');
+
+            // Rate Simulator Elements
+            const rateChangeMonthInputEl = document.getElementById('rateChangeMonthInput');
+            const rateChangeValueInputEl = document.getElementById('rateChangeValueInput');
+            const addRateChangeBtn = document.getElementById('addRateChangeBtn');
+            const clearRateChangesBtn = document.getElementById('clearRateChangesBtn');
+            const rateChangesTagsEl = document.getElementById('rate-changes-tags');
+            const ratePresetBtns = document.querySelectorAll('.rate-preset-btn');
+
+            // Table View & Export Elements
+            const groupModeBtns = document.querySelectorAll('.group-mode-btn');
+            const accordionBulkBtnsEl = document.getElementById('accordion-bulk-btns');
+            const expandAllBtn = document.getElementById('expandAllBtn');
+            const collapseAllBtn = document.getElementById('collapseAllBtn');
+            const highlightExtraOnlyEl = document.getElementById('highlightExtraOnly');
+            const shareLinkBtn = document.getElementById('shareLinkBtn');
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
+            const toastEl = document.getElementById('toast');
+            const toastMessageEl = document.getElementById('toast-message');
+
+            // Summary Elements
             const monthlyEmiEl = document.getElementById('monthly-emi');
             const principalAmountEl = document.getElementById('principal-amount');
             const totalInterestEl = document.getElementById('total-interest');
+            const originalInterestSubEl = document.getElementById('original-interest-sub');
             const totalPaymentEl = document.getElementById('total-payment');
+            const extraPaidSubEl = document.getElementById('extra-paid-sub');
             const totalSavingsEl = document.getElementById('total-savings');
             const timeSavedEl = document.getElementById('time-saved');
+            const revisedTenureSubEl = document.getElementById('revised-tenure-sub');
+            const payoffDateBannerEl = document.getElementById('payoff-date-banner');
+
+            // Progress Bar Elements
+            const barPrincipalEl = document.getElementById('bar-principal');
+            const barInterestEl = document.getElementById('bar-interest');
+            const barSavedEl = document.getElementById('bar-saved');
+            const interestRatioTextEl = document.getElementById('interest-ratio-text');
+
             const tableBodyEl = document.getElementById('amortization-table-body');
 
-            // --- Helper Functions (Declared first to avoid ReferenceError) ---
-            
-            /**
-             * Formats a number into Indian Rupee currency format.
-             * @param {number} num The number to format.
-             * @returns {string} The formatted currency string.
-             */
+            // --- Initialize Default Start Date ---
+            const now = new Date();
+            startDateEl.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            // --- Toast Notification Helper ---
+            function showToast(msg) {
+                toastMessageEl.textContent = msg;
+                toastEl.classList.remove('hidden');
+                setTimeout(() => {
+                    toastEl.classList.add('hidden');
+                }, 3000);
+            }
+
+            // --- Formatting Helpers ---
             const formatCurrency = (num) => {
                 return new Intl.NumberFormat('en-IN', {
                     style: 'currency',
                     currency: 'INR',
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
-                }).format(num);
+                }).format(Math.round(num));
             };
 
-            /**
-             * Converts a total number of months into a "Y years, M months" string.
-             * @param {number} totalMonths The total months.
-             * @returns {string} The formatted time string.
-             */
+            const formatNumberPlain = (num) => {
+                return new Intl.NumberFormat('en-IN', {
+                    maximumFractionDigits: 0
+                }).format(Math.round(num));
+            };
+
+            const formatIndianShort = (num) => {
+                if (num >= 10000000) return `₹ ${(num / 10000000).toFixed(2)} Cr`;
+                if (num >= 100000) return `₹ ${(num / 100000).toFixed(2)} Lakhs`;
+                if (num >= 1000) return `₹ ${(num / 1000).toFixed(1)} K`;
+                return `₹ ${num}`;
+            };
+
             const formatTime = (totalMonths) => {
                 if (totalMonths <= 0) return '0 months';
                 const years = Math.floor(totalMonths / 12);
                 const months = totalMonths % 12;
-                let result = '';
-                if (years > 0) {
-                    result += `${years} year${years > 1 ? 's' : ''}`;
-                }
-                if (months > 0) {
-                    if (years > 0) result += ', ';
-                    result += `${months} month${months > 1 ? 's' : ''}`;
-                }
-                return result;
+                const parts = [];
+                if (years > 0) parts.push(`${years} yr${years > 1 ? 's' : ''}`);
+                if (months > 0) parts.push(`${months} mo${months > 1 ? 's' : ''}`);
+                return parts.join(', ');
             };
 
-            // --- Core Calculation Logic ---
+            const getMonthDateObj = (monthIndex1Based) => {
+                if (!startDateEl.value) {
+                    return new Date(now.getFullYear(), now.getMonth() + (monthIndex1Based - 1), 1);
+                }
+                const [startYear, startMonth] = startDateEl.value.split('-').map(Number);
+                return new Date(startYear, startMonth - 1 + (monthIndex1Based - 1), 1);
+            };
 
-            /**
-             * Calculates the loan amortization schedule based on various parameters.
-             * @param {number} principal - The principal loan amount.
-             * @param {number} annualRate - The annual interest rate in percent.
-             * @param {number} tenureYears - The loan tenure in years.
-             * @param {number} extraInstallments - Number of extra EMIs paid per year.
-             * @param {number} emiIncreasePercent - The percentage to increase EMI annually.
-             * @returns {object} An object containing the schedule, totals, and initial EMI.
-             */
-            function calculateScenario(principal, annualRate, tenureYears, extraInstallments, emiIncreasePercent) {
-                const monthlyRate = annualRate / 12 / 100;
-                const tenureMonths = tenureYears * 12;
-                
-                if (principal <= 0 || monthlyRate <= 0 || tenureMonths <= 0) {
-                    return { schedule: [], totalInterest: 0, totalMonths: 0, initialEmi: 0 };
+            const getMonthLabel = (monthIndex1Based) => {
+                const date = getMonthDateObj(monthIndex1Based);
+                return `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+            };
+
+            const getGroupInfo = (monthIndex1Based) => {
+                const date = getMonthDateObj(monthIndex1Based);
+                const calYear = date.getFullYear();
+                const calMonth = date.getMonth(); // 0 = Jan, 3 = Apr
+
+                if (tableGroupMode === 'cal') {
+                    return { key: `CY-${calYear}`, title: `Year ${calYear}` };
+                }
+                // Financial Year (Apr to Mar)
+                const fyStartYear = calMonth >= 3 ? calYear : calYear - 1;
+                const fyEndShort = String((fyStartYear + 1) % 100).padStart(2, '0');
+                return { key: `FY-${fyStartYear}`, title: `FY ${fyStartYear}-${fyEndShort}` };
+            };
+
+            // --- Initialize 12-Month Grid Buttons ---
+            function renderMonthsGrid() {
+                monthsGridEl.innerHTML = '';
+                MONTH_NAMES.forEach((name, idx) => {
+                    const isSelected = selectedRecurringMonths.has(idx);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = name;
+                    btn.className = `py-1.5 px-2 rounded-lg text-xs font-semibold border transition ${
+                        isSelected 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
+                            : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400'
+                    }`;
+                    btn.addEventListener('click', () => {
+                        if (selectedRecurringMonths.has(idx)) {
+                            selectedRecurringMonths.delete(idx);
+                        } else {
+                            selectedRecurringMonths.add(idx);
+                        }
+                        renderMonthsGrid();
+                        calculateAndDisplay();
+                    });
+                    monthsGridEl.appendChild(btn);
+                });
+            }
+
+            // --- Determine Scheduled Extra Payment for a Given Month ---
+            function getScheduledExtraForMonth(monthNumber) {
+                if (Object.prototype.hasOwnProperty.call(customMonthlyOverrides, monthNumber)) {
+                    return { amount: customMonthlyOverrides[monthNumber], isCustomOverride: true };
                 }
 
-                // Calculate the standard EMI
-                const emiPower = Math.pow(1 + monthlyRate, tenureMonths);
-                const initialEmi = principal * monthlyRate * emiPower / (emiPower - 1);
+                const recurringAmt = parseFloat(recurringExtraAmountEl.value) || 0;
+                if (prepaymentMode === 'none' || recurringAmt <= 0) {
+                    return { amount: 0, isCustomOverride: false };
+                }
+
+                const calMonth = getMonthDateObj(monthNumber).getMonth();
+
+                if (prepaymentMode === 'monthly') {
+                    return { amount: recurringAmt, isCustomOverride: false };
+                }
+                if (prepaymentMode === 'yearly') {
+                    const targetMonth = parseInt(yearlyPaymentMonthEl.value, 10);
+                    return { amount: calMonth === targetMonth ? recurringAmt : 0, isCustomOverride: false };
+                }
+                if (prepaymentMode === 'custom_months') {
+                    return { amount: selectedRecurringMonths.has(calMonth) ? recurringAmt : 0, isCustomOverride: false };
+                }
+
+                return { amount: 0, isCustomOverride: false };
+            }
+
+            // --- Core Calculation Engine (Supports Prepayments + Floating Rate Resets) ---
+            function calculateScenario(principal, initialAnnualRate, tenureYears, includeAdvancedFeatures) {
+                const tenureMonths = tenureYears * 12;
+                const initialMonthlyRate = initialAnnualRate / 12 / 100;
+
+                if (principal <= 0 || initialMonthlyRate <= 0 || tenureMonths <= 0) {
+                    return { schedule: [], totalInterest: 0, totalExtraPaid: 0, totalMonths: 0, initialEmi: 0 };
+                }
+
+                const emiPower = Math.pow(1 + initialMonthlyRate, tenureMonths);
+                const initialEmi = (principal * initialMonthlyRate * emiPower) / (emiPower - 1);
 
                 let balance = principal;
                 let currentEmi = initialEmi;
+                let activeAnnualRate = initialAnnualRate;
                 let months = 0;
                 let totalInterest = 0;
+                let totalExtraPaid = 0;
                 const schedule = [];
 
-                while (balance > 0) {
+                const emiIncreasePercent = includeAdvancedFeatures ? (parseFloat(emiIncreaseEl.value) || 0) : 0;
+
+                while (balance > 0.01) {
                     months++;
 
-                    // Annual EMI increase
+                    // Check if a Floating Rate Change takes effect this month
+                    let rateChangedThisMonth = false;
+                    if (includeAdvancedFeatures && Object.prototype.hasOwnProperty.call(rateChanges, months)) {
+                        activeAnnualRate = rateChanges[months];
+                        rateChangedThisMonth = true;
+                    }
+
+                    const currentMonthlyRate = activeAnnualRate / 12 / 100;
+
+                    // Annual EMI Step-Up at the start of each new loan year (Month 13, 25, 37...)
                     if (emiIncreasePercent > 0 && months > 1 && (months - 1) % 12 === 0) {
                         currentEmi *= (1 + emiIncreasePercent / 100);
                     }
 
-                    let interestForMonth = balance * monthlyRate;
-                    let principalForMonth = currentEmi - interestForMonth;
+                    const interestForMonth = balance * currentMonthlyRate;
 
-                    // Adjust final payment
-                    if (principalForMonth > balance) {
-                        principalForMonth = balance;
-                        currentEmi = balance + interestForMonth;
+                    // If floating rate spiked so high that interest exceeds EMI, bump EMI minimally to cover interest + tiny principal
+                    let effectiveRegularEmi = currentEmi;
+                    if (interestForMonth >= effectiveRegularEmi) {
+                        effectiveRegularEmi = interestForMonth + 100;
                     }
-                    
-                    balance -= principalForMonth;
+
+                    let regularPrincipal = effectiveRegularEmi - interestForMonth;
+
+                    if (regularPrincipal >= balance) {
+                        regularPrincipal = balance;
+                        effectiveRegularEmi = balance + interestForMonth;
+                    }
+
+                    balance -= regularPrincipal;
                     totalInterest += interestForMonth;
+
+                    let extraPaid = 0;
+                    let isCustomOverride = false;
+                    if (includeAdvancedFeatures && balance > 0.01) {
+                        const extraInfo = getScheduledExtraForMonth(months);
+                        isCustomOverride = extraInfo.isCustomOverride;
+                        extraPaid = Math.min(extraInfo.amount, balance);
+                        balance -= extraPaid;
+                        totalExtraPaid += extraPaid;
+                    }
+
+                    const totalPrincipalForMonth = regularPrincipal + extraPaid;
+                    const groupInfo = getGroupInfo(months);
 
                     schedule.push({
                         month: months,
-                        emi: currentEmi,
-                        principal: principalForMonth,
+                        dateLabel: getMonthLabel(months),
+                        groupKey: groupInfo.key,
+                        groupTitle: groupInfo.title,
+                        rate: activeAnnualRate,
+                        rateChangedThisMonth,
+                        regularEmi: effectiveRegularEmi,
+                        extraPaid: extraPaid,
+                        isCustomOverride: isCustomOverride,
+                        principal: totalPrincipalForMonth,
                         interest: interestForMonth,
-                        balance: balance < 0.01 ? 0 : balance, // handle floating point inaccuracies
+                        balance: balance < 0.01 ? 0 : balance
                     });
 
-                    // Extra annual installments
-                    if (extraInstallments > 0 && months % 12 === 0 && balance > 0) {
-                        const extraPayment = extraInstallments * initialEmi;
-                        const actualExtraPayment = Math.min(extraPayment, balance);
-                        
-                        balance -= actualExtraPayment;
-                        
-                        schedule.push({
-                            month: `${months} (Extra)`,
-                            emi: actualExtraPayment,
-                            principal: actualExtraPayment,
-                            interest: 0,
-                            balance: balance < 0.01 ? 0 : balance,
-                        });
-                    }
-                    
-                    // Safety break to prevent infinite loops from bad inputs
-                    if (months > tenureYears * 12 * 2 && tenureYears > 0) {
-                        console.error("Calculation exceeded expected time. Breaking loop.");
-                        break;
-                    }
+                    // Safety cap at 60 years (720 months)
+                    if (months >= 720) break;
                 }
 
-                return { schedule, totalInterest, totalMonths: months, initialEmi };
+                return {
+                    schedule,
+                    totalInterest,
+                    totalExtraPaid,
+                    totalMonths: months,
+                    initialEmi
+                };
             }
 
+            // --- Render Custom Prepayment Tags ---
+            function renderCustomTags() {
+                customPaymentsTagsEl.innerHTML = '';
+                const entries = Object.entries(customMonthlyOverrides).sort((a, b) => Number(a[0]) - Number(b[0]));
 
-            // --- Main Display Function ---
+                const hasAnyPrepayments = prepaymentMode !== 'none' || entries.length > 0 || (parseFloat(emiIncreaseEl.value) > 0);
+                resetPrepaymentsBtn.classList.toggle('hidden', !hasAnyPrepayments);
 
-            /**
-             * Main function to orchestrate calculation and DOM updates.
-             */
-            function calculateAndDisplay() {
-                // Get user inputs
-                const principal = parseFloat(loanAmountEl.value) || 0;
-                const annualRate = parseFloat(interestRateEl.value) || 0;
-                const tenureYears = parseInt(tenureEl.value) || 0;
-                const extraInstallments = parseInt(extraInstallmentsEl.value) || 0;
-                const emiIncrease = parseFloat(emiIncreaseEl.value) || 0;
-                
-                if (principal <= 0 || annualRate <= 0 || tenureYears <= 0) {
-                    resultsSummaryEl.classList.add('hidden');
-                    amortizationSectionEl.classList.add('hidden');
-                    return;
-                }
-
-                // Calculate both standard and advanced scenarios
-                const standardResult = calculateScenario(principal, annualRate, tenureYears, 0, 0);
-                const advancedResult = calculateScenario(principal, annualRate, tenureYears, extraInstallments, emiIncrease);
-
-                // Calculate savings
-                const interestSaved = standardResult.totalInterest - advancedResult.totalInterest;
-                const timeSavedMonths = standardResult.totalMonths - advancedResult.totalMonths;
-
-                // Update Summary UI
-                resultsSummaryEl.classList.remove('hidden');
-                monthlyEmiEl.textContent = formatCurrency(standardResult.initialEmi);
-                principalAmountEl.textContent = formatCurrency(principal);
-                totalInterestEl.textContent = formatCurrency(advancedResult.totalInterest);
-                totalPaymentEl.textContent = formatCurrency(principal + advancedResult.totalInterest);
-                totalSavingsEl.textContent = formatCurrency(interestSaved > 0 ? interestSaved : 0);
-                timeSavedEl.textContent = formatTime(timeSavedMonths > 0 ? timeSavedMonths : 0);
-                
-                // Update Amortization Table UI
-                amortizationSectionEl.classList.remove('hidden');
-                tableBodyEl.innerHTML = ''; // Clear previous results
-                
-                advancedResult.schedule.forEach(row => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50';
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.month}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.emi)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.principal)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(row.interest)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right font-semibold">${formatCurrency(row.balance)}</td>
+                entries.forEach(([m, amt]) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-800 border border-indigo-200';
+                    tag.innerHTML = `
+                        <span>M${m} (${getMonthLabel(Number(m))}): <strong>${formatCurrency(amt)}</strong></span>
+                        <button type="button" data-month="${m}" class="text-indigo-500 hover:text-indigo-800 font-bold leading-none">&times;</button>
                     `;
-                    tableBodyEl.appendChild(tr);
+                    tag.querySelector('button').addEventListener('click', () => {
+                        delete customMonthlyOverrides[m];
+                        calculateAndDisplay();
+                    });
+                    customPaymentsTagsEl.appendChild(tag);
                 });
             }
 
+            // --- Render Floating Rate Reset Tags ---
+            function renderRateChangeTags() {
+                rateChangesTagsEl.innerHTML = '';
+                const entries = Object.entries(rateChanges).sort((a, b) => Number(a[0]) - Number(b[0]));
+                clearRateChangesBtn.classList.toggle('hidden', entries.length === 0);
+
+                entries.forEach(([m, rate]) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-300';
+                    tag.innerHTML = `
+                        <span>⚡ From M${m} (${getMonthLabel(Number(m))}): <strong>${Number(rate).toFixed(2)}%</strong></span>
+                        <button type="button" data-month="${m}" class="text-amber-600 hover:text-amber-900 font-bold leading-none">&times;</button>
+                    `;
+                    tag.querySelector('button').addEventListener('click', () => {
+                        delete rateChanges[m];
+                        calculateAndDisplay();
+                    });
+                    rateChangesTagsEl.appendChild(tag);
+                });
+            }
+
+            // --- Update Helper Text for Recurring Prepayments ---
+            function updateRecurringUI() {
+                recurringContainerEl.classList.toggle('hidden', prepaymentMode === 'none');
+                yearlyMonthPickerEl.classList.toggle('hidden', prepaymentMode !== 'yearly');
+                customMonthsPickerEl.classList.toggle('hidden', prepaymentMode !== 'custom_months');
+
+                const amt = parseFloat(recurringExtraAmountEl.value) || 0;
+                const emiRatio = currentBaseEmi > 0 ? (amt / currentBaseEmi).toFixed(1) : 0;
+
+                if (prepaymentMode === 'monthly') {
+                    recurringHelperTextEl.textContent = `Paid every month (${emiRatio}x of base EMI). Equals ${formatCurrency(amt * 12)} extra/year.`;
+                } else if (prepaymentMode === 'yearly') {
+                    const monthName = yearlyPaymentMonthEl.options[yearlyPaymentMonthEl.selectedIndex].text.split(' ')[0];
+                    recurringHelperTextEl.textContent = `Paid once every year in ${monthName} (${emiRatio}x of base EMI).`;
+                } else if (prepaymentMode === 'custom_months') {
+                    const count = selectedRecurringMonths.size;
+                    recurringHelperTextEl.textContent = `Paid ${count} time(s) a year (${formatCurrency(amt * count)}/yr total).`;
+                }
+            }
+
+            // --- Main Orchestrator ---
+            function calculateAndDisplay() {
+                const principal = parseFloat(loanAmountEl.value) || 0;
+                const annualRate = parseFloat(interestRateEl.value) || 0;
+                const tenureYears = parseInt(tenureEl.value, 10) || 0;
+
+                amountInWordsEl.textContent = formatIndianShort(principal);
+
+                if (principal <= 0 || annualRate <= 0 || tenureYears <= 0) return;
+
+                const standardResult = calculateScenario(principal, annualRate, tenureYears, false);
+                currentBaseEmi = standardResult.initialEmi;
+
+                updateRecurringUI();
+
+                const advancedResult = calculateScenario(principal, annualRate, tenureYears, true);
+
+                lastCalculatedStandard = standardResult;
+                lastCalculatedAdvanced = advancedResult;
+
+                const interestDiff = standardResult.totalInterest - advancedResult.totalInterest;
+                const interestSaved = Math.max(0, interestDiff);
+                const timeSavedMonths = standardResult.totalMonths - advancedResult.totalMonths;
+
+                // Update Summary Numbers
+                monthlyEmiEl.textContent = formatCurrency(standardResult.initialEmi);
+                principalAmountEl.textContent = formatCurrency(principal);
+                totalInterestEl.textContent = formatCurrency(advancedResult.totalInterest);
+
+                if (Math.abs(interestDiff) > 100) {
+                    originalInterestSubEl.textContent = `Baseline: ${formatCurrency(standardResult.totalInterest)}`;
+                    originalInterestSubEl.classList.remove('hidden');
+                } else {
+                    originalInterestSubEl.classList.add('hidden');
+                }
+
+                totalPaymentEl.textContent = formatCurrency(principal + advancedResult.totalInterest);
+                if (advancedResult.totalExtraPaid > 0) {
+                    extraPaidSubEl.textContent = `Includes ${formatCurrency(advancedResult.totalExtraPaid)} prepaid`;
+                    extraPaidSubEl.classList.remove('hidden');
+                } else {
+                    extraPaidSubEl.classList.add('hidden');
+                }
+
+                if (interestDiff >= 0) {
+                    totalSavingsEl.textContent = formatCurrency(interestSaved);
+                    totalSavingsEl.className = 'text-lg font-extrabold text-emerald-950 mt-1';
+                } else {
+                    totalSavingsEl.textContent = `+${formatCurrency(Math.abs(interestDiff))} Extra`;
+                    totalSavingsEl.className = 'text-lg font-extrabold text-rose-700 mt-1';
+                }
+
+                timeSavedEl.textContent = timeSavedMonths >= 0 
+                    ? formatTime(timeSavedMonths) 
+                    : `+${formatTime(Math.abs(timeSavedMonths))} longer`;
+                revisedTenureSubEl.textContent = `Actual: ${formatTime(advancedResult.totalMonths)} (vs ${tenureYears}y)`;
+
+                const lastRow = advancedResult.schedule[advancedResult.schedule.length - 1];
+                payoffDateBannerEl.textContent = lastRow 
+                    ? `Loan closes in ${lastRow.dateLabel} (${advancedResult.totalMonths} months)` 
+                    : 'Estimated Payoff: —';
+
+                // Update Stacked Progress Bar
+                const baselineCost = Math.max(principal + standardResult.totalInterest, principal + advancedResult.totalInterest);
+                if (baselineCost > 0) {
+                    const pPct = ((principal / baselineCost) * 100).toFixed(1);
+                    const iPct = ((advancedResult.totalInterest / baselineCost) * 100).toFixed(1);
+                    const sPct = ((interestSaved / baselineCost) * 100).toFixed(1);
+
+                    barPrincipalEl.style.width = `${pPct}%`;
+                    barInterestEl.style.width = `${iPct}%`;
+                    barSavedEl.style.width = `${sPct}%`;
+
+                    const currentTotal = principal + advancedResult.totalInterest;
+                    const actualInterestShare = ((advancedResult.totalInterest / currentTotal) * 100).toFixed(1);
+                    interestRatioTextEl.textContent = `Interest is ${actualInterestShare}% of total payment`;
+                }
+
+                renderCustomTags();
+                renderRateChangeTags();
+                renderAmortizationTable(advancedResult.schedule);
+            }
+
+            // --- Helper to Build a Single Month Row ---
+            function createMonthRowElement(row) {
+                const tr = document.createElement('tr');
+                const hasExtra = row.extraPaid > 0;
+                tr.className = hasExtra 
+                    ? 'bg-emerald-50/60 hover:bg-emerald-100/60 transition' 
+                    : 'hover:bg-slate-50 transition';
+
+                tr.innerHTML = `
+                    <td class="px-4 py-2.5 whitespace-nowrap pl-8">
+                        <div class="font-semibold text-slate-800">${row.dateLabel}</div>
+                        <div class="text-[11px] text-slate-400">Month ${row.month}</div>
+                    </td>
+                    <td class="px-3 py-2.5 whitespace-nowrap text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+                            row.rateChangedThisMonth 
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300' 
+                                : 'bg-slate-100 text-slate-600'
+                        }">
+                            ${row.rate.toFixed(2)}%${row.rateChangedThisMonth ? ' ⚡' : ''}
+                        </span>
+                    </td>
+                    <td class="px-4 py-2.5 whitespace-nowrap text-right text-slate-700">${formatCurrency(row.regularEmi)}</td>
+                    <td class="px-4 py-2.5 whitespace-nowrap text-right bg-blue-50/40">
+                        <div class="inline-flex items-center justify-end">
+                            <input 
+                                type="number" 
+                                min="0" 
+                                step="1000" 
+                                data-month="${row.month}"
+                                value="${row.extraPaid > 0 ? Math.round(row.extraPaid) : ''}" 
+                                placeholder="0"
+                                title="Type a custom extra payment for Month ${row.month}"
+                                class="extra-month-input w-28 sm:w-32 p-1.5 text-right text-xs font-semibold rounded-lg border transition ${
+                                    row.isCustomOverride 
+                                        ? 'border-indigo-400 bg-indigo-50 text-indigo-900 focus:ring-indigo-500' 
+                                        : hasExtra 
+                                            ? 'border-emerald-400 bg-white text-emerald-800 focus:ring-emerald-500' 
+                                            : 'border-slate-200 bg-white/80 text-slate-600 focus:border-blue-500 focus:ring-blue-500'
+                                }"
+                            >
+                        </div>
+                    </td>
+                    <td class="px-4 py-2.5 whitespace-nowrap text-right font-medium text-slate-700">${formatCurrency(row.principal)}</td>
+                    <td class="px-4 py-2.5 whitespace-nowrap text-right text-amber-700">${formatCurrency(row.interest)}</td>
+                    <td class="px-4 py-2.5 whitespace-nowrap text-right font-bold text-slate-900">${formatCurrency(row.balance)}</td>
+                `;
+
+                const inputEl = tr.querySelector('.extra-month-input');
+                inputEl.addEventListener('change', (e) => {
+                    const m = parseInt(e.target.getAttribute('data-month'), 10);
+                    const val = parseFloat(e.target.value);
+                    if (isNaN(val) || val <= 0) {
+                        if (prepaymentMode !== 'none') {
+                            customMonthlyOverrides[m] = 0;
+                        } else {
+                            delete customMonthlyOverrides[m];
+                        }
+                    } else {
+                        customMonthlyOverrides[m] = val;
+                    }
+                    calculateAndDisplay();
+                });
+
+                return tr;
+            }
+
+            // --- Render Amortization Table (Supports FY/Calendar Year Accordion or Flat View) ---
+            function renderAmortizationTable(schedule) {
+                tableBodyEl.innerHTML = '';
+                const filterExtraOnly = highlightExtraOnlyEl.checked;
+                const filteredSchedule = filterExtraOnly 
+                    ? schedule.filter(r => r.extraPaid > 0) 
+                    : schedule;
+
+                accordionBulkBtnsEl.classList.toggle('hidden', tableGroupMode === 'flat');
+
+                const fragment = document.createDocumentFragment();
+
+                if (tableGroupMode === 'flat') {
+                    filteredSchedule.forEach(row => {
+                        fragment.appendChild(createMonthRowElement(row));
+                    });
+                    tableBodyEl.appendChild(fragment);
+                    return;
+                }
+
+                // Group rows by Financial Year or Calendar Year
+                const groupsMap = new Map();
+                filteredSchedule.forEach(row => {
+                    if (!groupsMap.has(row.groupKey)) {
+                        groupsMap.set(row.groupKey, {
+                            key: row.groupKey,
+                            title: row.groupTitle,
+                            rows: [],
+                            totalRegularEmi: 0,
+                            totalExtraPaid: 0,
+                            totalPrincipal: 0,
+                            totalInterest: 0,
+                            closingBalance: row.balance,
+                            minRate: row.rate,
+                            maxRate: row.rate
+                        });
+                    }
+                    const grp = groupsMap.get(row.groupKey);
+                    grp.rows.push(row);
+                    grp.totalRegularEmi += row.regularEmi;
+                    grp.totalExtraPaid += row.extraPaid;
+                    grp.totalPrincipal += row.principal;
+                    grp.totalInterest += row.interest;
+                    grp.closingBalance = row.balance;
+                    grp.minRate = Math.min(grp.minRate, row.rate);
+                    grp.maxRate = Math.max(grp.maxRate, row.rate);
+                });
+
+                // Expand the first year automatically on initial load
+                if (isFirstRender && groupsMap.size > 0) {
+                    const firstKey = groupsMap.keys().next().value;
+                    expandedGroups.add(firstKey);
+                    isFirstRender = false;
+                }
+
+                groupsMap.forEach((grp) => {
+                    const isExpanded = expandedGroups.has(grp.key);
+                    const headerTr = document.createElement('tr');
+                    headerTr.className = 'bg-slate-100/90 hover:bg-slate-200/70 cursor-pointer font-semibold text-slate-800 transition select-none border-t border-slate-200';
+
+                    const rateLabel = grp.minRate === grp.maxRate 
+                        ? `${grp.minRate.toFixed(2)}%` 
+                        : `${grp.minRate.toFixed(2)}%–${grp.maxRate.toFixed(2)}%`;
+
+                    headerTr.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap flex items-center gap-2">
+                            <span class="inline-block transition-transform duration-200 text-slate-500 text-xs ${isExpanded ? 'rotate-90' : ''}">▶</span>
+                            <span>${grp.title}</span>
+                            <span class="text-[11px] font-normal text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">${grp.rows.length} mo</span>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap text-center text-xs text-slate-600">${rateLabel}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right text-slate-800">${formatCurrency(grp.totalRegularEmi)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right ${grp.totalExtraPaid > 0 ? 'text-emerald-700 font-bold bg-emerald-50/50' : 'text-slate-400'}">
+                            ${grp.totalExtraPaid > 0 ? formatCurrency(grp.totalExtraPaid) : '—'}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right text-blue-800">${formatCurrency(grp.totalPrincipal)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right text-amber-800">${formatCurrency(grp.totalInterest)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right font-extrabold text-slate-900">${formatCurrency(grp.closingBalance)}</td>
+                    `;
+
+                    headerTr.addEventListener('click', () => {
+                        if (expandedGroups.has(grp.key)) {
+                            expandedGroups.delete(grp.key);
+                        } else {
+                            expandedGroups.add(grp.key);
+                        }
+                        renderAmortizationTable(lastCalculatedAdvanced.schedule);
+                    });
+
+                    fragment.appendChild(headerTr);
+
+                    if (isExpanded) {
+                        grp.rows.forEach(row => {
+                            fragment.appendChild(createMonthRowElement(row));
+                        });
+                    }
+                });
+
+                tableBodyEl.appendChild(fragment);
+            }
+
+            // --- Shareable URL State Encoding & Decoding ---
+            function generateShareableUrl() {
+                const params = new URLSearchParams();
+                params.set('p', loanAmountEl.value);
+                params.set('r', interestRateEl.value);
+                params.set('t', tenureEl.value);
+                params.set('sd', startDateEl.value);
+                params.set('pm', prepaymentMode);
+                params.set('ra', recurringExtraAmountEl.value);
+                params.set('ym', yearlyPaymentMonthEl.value);
+                params.set('cm', Array.from(selectedRecurringMonths).join(','));
+                params.set('step', emiIncreaseEl.value);
+                params.set('gm', tableGroupMode);
+
+                // Encode custom monthly overrides: m1:amt1,m2:amt2
+                const coEntries = Object.entries(customMonthlyOverrides)
+                    .map(([m, a]) => `${m}:${Math.round(a)}`)
+                    .join(',');
+                if (coEntries) params.set('co', coEntries);
+
+                // Encode floating rate changes: m1:rate1,m2:rate2
+                const rcEntries = Object.entries(rateChanges)
+                    .map(([m, r]) => `${m}:${r}`)
+                    .join(',');
+                if (rcEntries) params.set('rc', rcEntries);
+
+                return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+            }
+
+            function loadStateFromUrl() {
+                const params = new URLSearchParams(window.location.search);
+                if (!params.has('p')) return;
+
+                if (params.get('p')) {
+                    loanAmountEl.value = params.get('p');
+                    loanAmountSliderEl.value = params.get('p');
+                }
+                if (params.get('r')) {
+                    interestRateEl.value = params.get('r');
+                    interestRateSliderEl.value = params.get('r');
+                }
+                if (params.get('t')) tenureEl.value = params.get('t');
+                if (params.get('sd')) startDateEl.value = params.get('sd');
+                if (params.get('pm')) {
+                    prepaymentMode = params.get('pm');
+                    freqBtns.forEach(b => {
+                        b.className = b.getAttribute('data-mode') === prepaymentMode
+                            ? 'freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition bg-white text-blue-700 shadow-sm'
+                            : 'freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900';
+                    });
+                }
+                if (params.get('ra')) recurringExtraAmountEl.value = params.get('ra');
+                if (params.get('ym')) yearlyPaymentMonthEl.value = params.get('ym');
+                if (params.get('cm')) {
+                    const monthsArr = params.get('cm').split(',').filter(Boolean).map(Number);
+                    selectedRecurringMonths = new Set(monthsArr);
+                }
+                if (params.get('step')) {
+                    emiIncreaseEl.value = params.get('step');
+                    emiIncreaseSliderEl.value = params.get('step');
+                }
+                if (params.get('gm')) {
+                    tableGroupMode = params.get('gm');
+                    groupModeBtns.forEach(b => {
+                        b.className = b.getAttribute('data-group') === tableGroupMode
+                            ? 'group-mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-blue-700 shadow-sm'
+                            : 'group-mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900';
+                    });
+                }
+                if (params.get('co')) {
+                    customMonthlyOverrides = {};
+                    params.get('co').split(',').forEach(pair => {
+                        const [m, a] = pair.split(':').map(Number);
+                        if (m && !isNaN(a)) customMonthlyOverrides[m] = a;
+                    });
+                }
+                if (params.get('rc')) {
+                    rateChanges = {};
+                    params.get('rc').split(',').forEach(pair => {
+                        const [m, r] = pair.split(':').map(Number);
+                        if (m && !isNaN(r)) rateChanges[m] = r;
+                    });
+                }
+            }
+
+            // --- Export to CSV (Excel Compatible) ---
+            function exportToCsv() {
+                if (!lastCalculatedAdvanced || !lastCalculatedAdvanced.schedule.length) return;
+
+                const headers = ['Month #', 'Date', 'Financial Year', 'Interest Rate (%)', 'Regular EMI (INR)', 'Extra Prepayment (INR)', 'Principal Paid (INR)', 'Interest Paid (INR)', 'Closing Balance (INR)'];
+                const rows = lastCalculatedAdvanced.schedule.map(r => [
+                    r.month,
+                    r.dateLabel,
+                    r.groupTitle,
+                    r.rate.toFixed(2),
+                    Math.round(r.regularEmi),
+                    Math.round(r.extraPaid),
+                    Math.round(r.principal),
+                    Math.round(r.interest),
+                    Math.round(r.balance)
+                ]);
+
+                const csvContent = [
+                    headers.join(','),
+                    ...rows.map(e => e.join(','))
+                ].join('\n');
+
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Home_Loan_Schedule_${loanAmountEl.value}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast('Excel (CSV) schedule downloaded!');
+            }
+
+            // --- Export to PDF Report ---
+            function exportToPdf() {
+                if (!lastCalculatedAdvanced || !window.jspdf) {
+                    showToast('PDF library still loading, please try again.');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'pt', 'a4');
+
+                const principal = parseFloat(loanAmountEl.value) || 0;
+                const interestSaved = Math.max(0, lastCalculatedStandard.totalInterest - lastCalculatedAdvanced.totalInterest);
+                const timeSaved = Math.max(0, lastCalculatedStandard.totalMonths - lastCalculatedAdvanced.totalMonths);
+
+                // Report Title
+                doc.setFontSize(16);
+                doc.setTextColor(15, 23, 42);
+                doc.text('Home Loan Repayment & Prepayment Schedule', 40, 40);
+
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Generated on ${new Date().toLocaleDateString('en-IN')} | Base Loan: Rs. ${formatNumberPlain(principal)} @ ${interestRateEl.value}% for ${tenureEl.value} Years`, 40, 58);
+
+                // Summary Box Table
+                doc.autoTable({
+                    startY: 72,
+                    head: [['Initial Monthly EMI', 'Total Interest Payable', 'Total Extra Prepaid', 'Net Interest Saved', 'Tenure Saved']],
+                    body: [[
+                        `Rs. ${formatNumberPlain(lastCalculatedStandard.initialEmi)}`,
+                        `Rs. ${formatNumberPlain(lastCalculatedAdvanced.totalInterest)}`,
+                        `Rs. ${formatNumberPlain(lastCalculatedAdvanced.totalExtraPaid)}`,
+                        `Rs. ${formatNumberPlain(interestSaved)}`,
+                        formatTime(timeSaved)
+                    ]],
+                    theme: 'grid',
+                    headStyles: { fillColor: [37, 99, 235], fontSize: 9 },
+                    bodyStyles: { fontSize: 9, fontStyle: 'bold' },
+                    margin: { left: 40, right: 40 }
+                });
+
+                // Main Schedule Table
+                const tableRows = lastCalculatedAdvanced.schedule.map(r => [
+                    `${r.month} (${r.dateLabel})`,
+                    `${r.rate.toFixed(2)}%`,
+                    formatNumberPlain(r.regularEmi),
+                    formatNumberPlain(r.extraPaid),
+                    formatNumberPlain(r.principal),
+                    formatNumberPlain(r.interest),
+                    formatNumberPlain(r.balance)
+                ]);
+
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 20,
+                    head: [['Month', 'Rate', 'Regular EMI (Rs)', 'Extra Paid (Rs)', 'Principal (Rs)', 'Interest (Rs)', 'Balance (Rs)']],
+                    body: tableRows,
+                    theme: 'striped',
+                    headStyles: { fillColor: [51, 65, 85], fontSize: 8.5 },
+                    bodyStyles: { fontSize: 8 },
+                    columnStyles: {
+                        2: { halign: 'right' },
+                        3: { halign: 'right' },
+                        4: { halign: 'right' },
+                        5: { halign: 'right' },
+                        6: { halign: 'right' }
+                    },
+                    margin: { left: 40, right: 40 }
+                });
+
+                doc.save(`Home_Loan_Report_${loanAmountEl.value}.pdf`);
+                showToast('PDF Report downloaded!');
+            }
+
             // --- Event Listeners ---
-            
-            // Add listeners to all inputs to recalculate on change
-            [loanAmountEl, interestRateEl, tenureEl, extraInstallmentsEl, emiIncreaseEl].forEach(el => {
-                el.addEventListener('input', calculateAndDisplay);
+            loanAmountSliderEl.addEventListener('input', (e) => {
+                loanAmountEl.value = e.target.value;
+                calculateAndDisplay();
+            });
+            loanAmountEl.addEventListener('input', (e) => {
+                loanAmountSliderEl.value = e.target.value;
+                calculateAndDisplay();
             });
 
-            // Sync slider and number input for interest rate
             interestRateSliderEl.addEventListener('input', (e) => {
                 interestRateEl.value = e.target.value;
                 calculateAndDisplay();
             });
             interestRateEl.addEventListener('input', (e) => {
-                // Also update slider when number is typed
                 interestRateSliderEl.value = e.target.value;
+                calculateAndDisplay();
             });
-            
-            // Initial calculation on page load
+
+            emiIncreaseSliderEl.addEventListener('input', (e) => {
+                emiIncreaseEl.value = e.target.value;
+                calculateAndDisplay();
+            });
+            emiIncreaseEl.addEventListener('input', (e) => {
+                emiIncreaseSliderEl.value = e.target.value;
+                calculateAndDisplay();
+            });
+
+            [tenureEl, startDateEl, recurringExtraAmountEl, yearlyPaymentMonthEl, highlightExtraOnlyEl].forEach(el => {
+                el.addEventListener('input', calculateAndDisplay);
+            });
+
+            // Frequency Mode Buttons
+            freqBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    prepaymentMode = btn.getAttribute('data-mode');
+                    freqBtns.forEach(b => {
+                        b.className = 'freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900';
+                    });
+                    btn.className = 'freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition bg-white text-blue-700 shadow-sm';
+
+                    if (prepaymentMode !== 'none' && (parseFloat(recurringExtraAmountEl.value) || 0) === 0) {
+                        recurringExtraAmountEl.value = Math.round(currentBaseEmi);
+                    }
+                    calculateAndDisplay();
+                });
+            });
+
+            setOneEmiBtn.addEventListener('click', () => {
+                recurringExtraAmountEl.value = Math.round(currentBaseEmi);
+                calculateAndDisplay();
+            });
+
+            selectQuarterlyBtn.addEventListener('click', () => {
+                selectedRecurringMonths = new Set([2, 5, 8, 11]);
+                renderMonthsGrid();
+                calculateAndDisplay();
+            });
+            clearMonthsBtn.addEventListener('click', () => {
+                selectedRecurringMonths.clear();
+                renderMonthsGrid();
+                calculateAndDisplay();
+            });
+
+            // Add Custom Monthly Lump Sum
+            addCustomPaymentBtn.addEventListener('click', () => {
+                const m = parseInt(customMonthInputEl.value, 10);
+                const amt = parseFloat(customAmountInputEl.value);
+                if (!m || m < 1 || isNaN(amt) || amt < 0) return;
+
+                customMonthlyOverrides[m] = amt;
+                customMonthInputEl.value = '';
+                customAmountInputEl.value = '';
+                calculateAndDisplay();
+            });
+
+            resetPrepaymentsBtn.addEventListener('click', () => {
+                prepaymentMode = 'none';
+                recurringExtraAmountEl.value = 0;
+                emiIncreaseEl.value = 0;
+                emiIncreaseSliderEl.value = 0;
+                customMonthlyOverrides = {};
+                freqBtns.forEach(b => {
+                    b.className = b.getAttribute('data-mode') === 'none'
+                        ? 'freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition bg-white text-blue-700 shadow-sm'
+                        : 'freq-btn py-2 px-2.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900';
+                });
+                calculateAndDisplay();
+            });
+
+            // Floating Rate Reset Controls
+            addRateChangeBtn.addEventListener('click', () => {
+                const m = parseInt(rateChangeMonthInputEl.value, 10);
+                const newRate = parseFloat(rateChangeValueInputEl.value);
+                if (!m || m < 2 || isNaN(newRate) || newRate <= 0 || newRate > 30) return;
+
+                rateChanges[m] = newRate;
+                rateChangeMonthInputEl.value = '';
+                rateChangeValueInputEl.value = '';
+                calculateAndDisplay();
+            });
+
+            ratePresetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = btn.getAttribute('data-preset');
+                    const baseRate = parseFloat(interestRateEl.value) || 8.5;
+                    if (preset === 'cut') {
+                        rateChanges[25] = Math.max(4, Number((baseRate - 0.5).toFixed(2)));
+                    } else if (preset === 'hike') {
+                        rateChanges[25] = Number((baseRate + 0.5).toFixed(2));
+                    }
+                    calculateAndDisplay();
+                });
+            });
+
+            clearRateChangesBtn.addEventListener('click', () => {
+                rateChanges = {};
+                calculateAndDisplay();
+            });
+
+            // Table Grouping Mode Buttons (FY / Calendar / Flat)
+            groupModeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tableGroupMode = btn.getAttribute('data-group');
+                    groupModeBtns.forEach(b => {
+                        b.className = 'group-mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900';
+                    });
+                    btn.className = 'group-mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-blue-700 shadow-sm';
+                    expandedGroups.clear();
+                    isFirstRender = true;
+                    calculateAndDisplay();
+                });
+            });
+
+            expandAllBtn.addEventListener('click', () => {
+                if (!lastCalculatedAdvanced) return;
+                lastCalculatedAdvanced.schedule.forEach(r => expandedGroups.add(r.groupKey));
+                renderAmortizationTable(lastCalculatedAdvanced.schedule);
+            });
+
+            collapseAllBtn.addEventListener('click', () => {
+                expandedGroups.clear();
+                if (lastCalculatedAdvanced) renderAmortizationTable(lastCalculatedAdvanced.schedule);
+            });
+
+            // Share & Export Action Listeners
+            shareLinkBtn.addEventListener('click', () => {
+                const url = generateShareableUrl();
+                window.history.replaceState({}, '', url);
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Shareable plan link copied to clipboard!');
+                }).catch(() => {
+                    showToast('Plan URL updated in address bar!');
+                });
+            });
+
+            exportCsvBtn.addEventListener('click', exportToCsv);
+            exportPdfBtn.addEventListener('click', exportToPdf);
+
+            // --- Bootstrapping ---
+            loadStateFromUrl();
+            renderMonthsGrid();
             calculateAndDisplay();
         });
     </script>
-
 </body>
 </html>
