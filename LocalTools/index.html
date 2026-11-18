@@ -1,587 +1,1224 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalTools - Professional Client-Side Utilities</title>
+    <title>LocalTools — Professional Local Tools Running Entirely on Your Device</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: { 
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    animation: { 'fade-in': 'fadeIn 0.25s ease-out' },
-                    keyframes: { fadeIn: { '0%': { opacity: '0', transform: 'translateY(8px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } } }
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    animation: { 
+                        'fade-in': 'fadeIn 0.25s ease-out'
+                    },
+                    keyframes: { 
+                        fadeIn: { 
+                            '0%': { opacity: '0', transform: 'translateY(8px)' }, 
+                            '100%': { opacity: '1', transform: 'translateY(0)' } 
+                        } 
+                    }
                 }
             }
         }
     </script>
 
-    <!-- Core Client-Side Libraries -->
+    <!-- Core Libraries for Local Processing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.all.js"></script>
 
-    <!-- CRITICAL FIX: type="text/tailwindcss" enables @apply directives with Tailwind Play CDN -->
+    <!-- Tailwind Play CDN @apply support -->
     <style type="text/tailwindcss">
+        @layer components {
+            .tool-view {
+                @apply bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl animate-fade-in;
+            }
+            .sleek-input {
+                @apply w-full border border-slate-700/80 rounded-xl px-3.5 py-2.5 bg-slate-950/70 text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all;
+            }
+            .sleek-label {
+                @apply block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2;
+            }
+            .action-btn {
+                @apply w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-500 hover:to-cyan-500 text-white font-semibold text-sm shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5;
+            }
+            .reset-btn {
+                @apply w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 mt-3 rounded-xl font-semibold text-sm transition-all duration-200 border border-slate-700 flex items-center justify-center gap-2;
+            }
+            .drop-zone {
+                @apply border-2 border-dashed border-slate-700/80 hover:border-cyan-500/70 bg-slate-950/40 hover:bg-brand-500/5 rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer;
+            }
+            .drop-zone-active {
+                @apply border-cyan-500 bg-brand-500/10 !important;
+            }
+        }
+    </style>
+
+    <style>
         body {
-            background-color: #FAFAFA;
-            background-image:
-                radial-gradient(circle at 12% 0%, rgba(99,102,241,0.08), transparent 40%),
-                radial-gradient(circle at 88% 12%, rgba(236,72,153,0.06), transparent 38%);
+            background-color: #0b0914;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.1), transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.05), transparent 50%);
             background-attachment: fixed;
+            color: #f1f5f9;
         }
 
-        .glass-nav { @apply bg-white/80 backdrop-blur-xl border-b border-gray-200/80; }
-
-        .tool-card { @apply relative bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-gray-200/80 cursor-pointer transition-all duration-300 flex flex-col overflow-hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .tool-card:hover { transform: translateY(-4px); border-color: rgba(17,24,39,0.18); box-shadow: 0 12px 28px -8px rgba(0,0,0,0.12); }
-        .tool-card::before { content:''; position:absolute; inset:0; opacity:0; background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(236,72,153,0.04)); transition: opacity .3s ease; pointer-events: none; }
-        .tool-card:hover::before { opacity: 1; }
-
-        .tool-icon { @apply w-11 h-11 rounded-xl flex items-center justify-center mb-4 shadow-sm transition-transform duration-300 ease-out; }
-        .tool-card:hover .tool-icon { transform: scale(1.08) rotate(-4deg); }
-
-        .modern-file-input { @apply block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white file:shadow-sm hover:file:bg-gray-800 cursor-pointer border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50/60 p-8 text-center transition-all duration-200 hover:border-indigo-400 hover:bg-indigo-50/30; }
-
-        .action-btn { @apply w-full bg-gray-900 hover:bg-black text-white py-3.5 px-6 rounded-xl font-semibold transition-all duration-200 outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
-        .action-btn:not(:disabled):hover { box-shadow: 0 6px 20px rgba(0,0,0,0.25); transform: translateY(-1px); }
-        .reset-btn { @apply w-full bg-white hover:bg-gray-50 text-gray-700 py-3 mt-3 rounded-xl font-semibold transition-all duration-200 border border-gray-200 shadow-sm hover:-translate-y-0.5; }
-
-        .sleek-input { @apply w-full border border-gray-200 rounded-xl p-3 bg-white text-gray-900 text-sm focus:outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 transition-all; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .sleek-label { @apply block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2; }
-
-        .cat-pill { @apply px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900; }
-        .cat-pill.active { @apply bg-gray-900 text-white border-gray-900 shadow-sm; }
-
-        .tool-view { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); }
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: rgba(100, 116, 139, 0.3);
+            height: 0.45rem;
+            border-radius: 9999px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -4px;
+            background-color: #06b6d4;
+            height: 1rem;
+            width: 1rem;
+            border-radius: 9999px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
     </style>
 </head>
-<body class="text-gray-900 selection:bg-indigo-100 selection:text-indigo-900 antialiased min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-brand-500 selection:text-white">
 
-    <!-- Minimalist Navbar -->
-    <nav class="glass-nav sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-2.5 cursor-pointer group" onclick="showLanding()">
-                <div class="w-9 h-9 rounded-xl bg-gray-900 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
+    <!-- ========================================== -->
+    <!-- STICKY TOP NAVBAR                          -->
+    <!-- ========================================== -->
+    <nav class="sticky top-0 z-50 bg-[#0a0a10]/80 backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="showLanding()">
+                <div class="w-8 h-8 rounded-lg bg-[#1e1b4b] border border-indigo-500/30 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                    <i class="ph-fill ph-triangle text-indigo-400 text-sm"></i>
                 </div>
                 <div>
-                    <span class="font-extrabold text-xl tracking-tight block leading-none">LocalTools</span>
-                    <span class="text-[10px] font-semibold text-gray-400 tracking-wider uppercase">Zero-Server Suite</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-lg tracking-wide text-white">LocalTools</span>
+                        <span class="text-lg text-slate-400 font-light">Studio</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <select id="quickToolJump" onchange="if(this.value) showTool(this.value)" class="hidden sm:block text-xs font-semibold border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:border-gray-900">
-                    <option value="">Jump to tool...</option>
-                </select>
-                <button id="navBackBtn" onclick="showLanding()" class="hidden font-semibold text-sm text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 px-4 py-2 rounded-xl transition-all">
-                    ← All Tools
+            <!-- Right Nav Controls -->
+            <div class="flex items-center gap-6">
+                <!-- Privacy Status Pill -->
+                <div class="hidden md:flex items-center gap-2 text-sm text-slate-300 font-medium">
+                    <i class="ph-fill ph-shield-check text-white text-lg"></i>
+                    <span>100% Local · Files Never Leave Device</span>
+                </div>
+
+                <!-- Back to All Tools Button -->
+                <button id="navBackBtn" onclick="showLanding()" class="hidden items-center gap-1.5 font-medium text-sm text-white hover:text-cyan-400 transition-colors">
+                    <i class="ph ph-arrow-left"></i>
+                    <span>All Tools</span>
                 </button>
+
+                <!-- Quick Tool Switcher Dropdown (Hidden initially) -->
+                <div id="quickJumpWrapper" class="hidden relative">
+                    <select id="quickJumpSelect" onchange="if(this.value) showTool(this.value)" class="appearance-none bg-slate-800 text-slate-200 text-xs font-semibold pl-3 pr-8 py-2 rounded-xl border border-slate-700 cursor-pointer focus:outline-none focus:border-cyan-500">
+                        <option value="">Switch Tool...</option>
+                    </select>
+                    <i class="ph-bold ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none text-slate-400"></i>
+                </div>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto mt-10 px-6 pb-24 flex-1 w-full">
-        
+    <!-- ========================================== -->
+    <!-- MAIN CONTENT CONTAINER                     -->
+    <!-- ========================================== -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-14">
+
         <!-- ========================================== -->
-        <!-- VIEW 1: LANDING PAGE                       -->
+        <!-- VIEW 1: LANDING DASHBOARD                  -->
         <!-- ========================================== -->
         <div id="landingView" class="block animate-fade-in">
-            <div class="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-6">
-                <div class="max-w-2xl">
-                    <span class="inline-flex items-center gap-2 bg-white border border-gray-200 shadow-sm text-xs font-bold text-gray-600 px-3.5 py-1.5 rounded-full mb-5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        100% Client-Side · Zero Cloud Uploads
-                    </span>
-                    <h1 class="text-4xl sm:text-5xl font-extrabold mb-4 tracking-tight leading-tight">
-                        Everyday local tools.<br>
-                        <span class="bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-600 bg-clip-text text-transparent">Running entirely in your browser.</span>
-                    </h1>
-                    <p class="text-base sm:text-lg text-gray-500 font-medium leading-relaxed">
-                        Convert media, edit PDFs, and encrypt sensitive files directly in your device's memory. Nothing ever leaves your computer.
-                    </p>
-                </div>
-
-                <!-- Search & Filter Bar -->
-                <div class="w-full lg:w-80">
-                    <div class="relative">
-                        <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input type="text" id="toolSearchInput" placeholder="Search tools (e.g. MP3, Merge, Sign)..." class="sleek-input pl-10 py-2.5 text-sm">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Category Pills -->
-            <div class="flex flex-wrap items-center gap-2 mb-8" id="categoryPills">
-                <button class="cat-pill active" data-cat="all" onclick="filterCategory('all')">All Tools (11)</button>
-                <button class="cat-pill" data-cat="media" onclick="filterCategory('media')">Audio & Video</button>
-                <button class="cat-pill" data-cat="pdf" onclick="filterCategory('pdf')">PDF & Documents</button>
-                <button class="cat-pill" data-cat="security" onclick="filterCategory('security')">Security & Privacy</button>
-            </div>
-
-            <!-- Bento Box Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="toolGrid"></div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- TOOL 0: VIDEO TO AUDIO CONVERTER (NEW)     -->
-        <!-- ========================================== -->
-        <div id="vidAudioView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 max-w-3xl mx-auto animate-fade-in">
-            <div class="flex items-start justify-between gap-4 mb-6">
-                <div>
-                    <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md mb-2">Media Utility</span>
-                    <h2 class="text-2xl font-bold">Video to Audio Converter</h2>
-                    <p class="text-gray-500 text-sm">Extract MP3 or lossless WAV audio tracks locally with frame-accurate trimming.</p>
-                </div>
-            </div>
-
-            <input type="file" id="vaFileInput" accept="video/*,audio/*" class="modern-file-input mb-6">
-
-            <div id="vaWorkspace" class="hidden space-y-6">
-                <!-- Video Preview & File Metadata -->
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                    <div class="md:col-span-7 bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center max-h-56">
-                        <video id="vaVideoPreview" controls class="w-full max-h-56 object-contain"></video>
-                    </div>
-                    <div class="md:col-span-5 space-y-2.5 text-sm">
-                        <div class="font-bold text-gray-900 truncate" id="vaFileName">—</div>
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <div class="bg-white p-2.5 rounded-lg border border-gray-200/80">
-                                <span class="text-gray-400 block">File Size</span>
-                                <span id="vaFileSize" class="font-bold text-gray-800">—</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-gray-200/80">
-                                <span class="text-gray-400 block">Duration</span>
-                                <span id="vaDuration" class="font-bold text-gray-800">—</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-gray-200/80">
-                                <span class="text-gray-400 block">Sample Rate</span>
-                                <span id="vaSampleRate" class="font-bold text-gray-800">—</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-gray-200/80">
-                                <span class="text-gray-400 block">Source Channels</span>
-                                <span id="vaSourceChannels" class="font-bold text-gray-800">—</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Waveform Visualizer & Trim Controls -->
-                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <label class="sleek-label mb-0">Audio Waveform & Trim Range</label>
-                        <span id="vaTrimDurationBadge" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">Selected: 0.0s</span>
-                    </div>
-
-                    <div class="relative bg-white border border-gray-200 rounded-xl overflow-hidden h-24">
-                        <canvas id="vaWaveformCanvas" class="w-full h-24 block"></canvas>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                        <div class="bg-white p-3 rounded-xl border border-gray-200">
-                            <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-xs font-bold text-gray-500 uppercase">Start Time (sec)</span>
-                                <button type="button" onclick="setTrimFromVideo('start')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Use Current Time</button>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <input type="range" id="vaTrimStartRange" min="0" max="100" step="0.1" value="0" class="w-full accent-gray-900">
-                                <input type="number" id="vaTrimStartNum" min="0" step="0.1" value="0" class="w-20 border border-gray-200 rounded-lg px-2 py-1 text-sm font-semibold text-center">
-                            </div>
-                        </div>
-                        <div class="bg-white p-3 rounded-xl border border-gray-200">
-                            <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-xs font-bold text-gray-500 uppercase">End Time (sec)</span>
-                                <button type="button" onclick="setTrimFromVideo('end')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Use Current Time</button>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <input type="range" id="vaTrimEndRange" min="0" max="100" step="0.1" value="100" class="w-full accent-gray-900">
-                                <input type="number" id="vaTrimEndNum" min="0" step="0.1" value="100" class="w-20 border border-gray-200 rounded-lg px-2 py-1 text-sm font-semibold text-center">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Encoding Format & Quality Options -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="sleek-label">Output Format</label>
-                        <select id="vaFormat" class="sleek-input" onchange="toggleVaBitrate()">
-                            <option value="mp3">MP3 (Compressed)</option>
-                            <option value="wav">WAV (Lossless 16-bit PCM)</option>
-                        </select>
-                    </div>
-                    <div id="vaBitrateGroup">
-                        <label class="sleek-label">MP3 Bitrate</label>
-                        <select id="vaBitrate" class="sleek-input">
-                            <option value="128">128 kbps (Standard)</option>
-                            <option value="192" selected>192 kbps (High Quality)</option>
-                            <option value="320">320 kbps (Studio Master)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="sleek-label">Audio Channels</label>
-                        <select id="vaChannels" class="sleek-input">
-                            <option value="stereo">Stereo (2 Channels)</option>
-                            <option value="mono">Mono (1 Channel - Smaller File)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Progress Bar -->
-                <div id="vaProgressWrap" class="hidden space-y-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <div class="flex justify-between text-xs font-bold text-gray-700">
-                        <span id="vaProgressText">Encoding audio...</span>
-                        <span id="vaProgressPct">0%</span>
-                    </div>
-                    <div class="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div id="vaProgressBar" class="h-full bg-gray-900 transition-all duration-150" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <!-- Extracted Audio Preview Player -->
-                <div id="vaResultBox" class="hidden bg-emerald-50/90 border border-emerald-200 p-4 rounded-xl space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-bold text-emerald-900" id="vaResultTitle">Audio extracted!</span>
-                        <a id="vaDownloadLink" class="text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-lg transition cursor-pointer">Download Audio</a>
-                    </div>
-                    <audio id="vaResultAudio" controls class="w-full h-10"></audio>
-                </div>
-            </div>
-
-            <button id="vidAudioBtn" class="action-btn mt-4" disabled>Extract & Convert Audio</button>
-            <div id="vidAudioStatus" class="hidden"></div>
-            <button id="vidAudioResetBtn" class="reset-btn hidden" onclick="resetVideoAudio()">Convert Another Video</button>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- EXISTING 10 PDF TOOLS (OPTIMIZED)          -->
-        <!-- ========================================== -->
-        
-        <!-- 1. MERGE PDF -->
-        <div id="mergeView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">Merge PDFs</h2>
-            <p class="text-gray-500 mb-6 text-sm">Select multiple PDFs. Drag items to reorder them or remove unwanted files.</p>
-            <input type="file" id="mergeFileInput" accept="application/pdf" multiple class="modern-file-input mb-4">
-            <ul id="mergeFileList" class="mb-6 space-y-2 text-sm text-gray-700 cursor-move font-medium"></ul>
-            <button id="mergeBtn" class="action-btn" disabled>Merge Documents</button>
-            <div id="mergeStatus" class="hidden"></div>
-            <button id="mergeResetBtn" class="reset-btn hidden" onclick="resetTool('merge')">Process More Files</button>
-        </div>
-
-        <!-- 2. SPLIT PDF -->
-        <div id="splitView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">Split PDF</h2>
-            <p class="text-gray-500 mb-6 text-sm">Extract specific page ranges into a new PDF document.</p>
-            <input type="file" id="splitFileInput" accept="application/pdf" class="modern-file-input mb-4">
-            <div id="splitControls" class="hidden mb-6 space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <div class="flex justify-between items-center text-xs font-bold text-gray-600">
-                    <span>Detected Pages</span>
-                    <span id="splitPageCountBadge" class="bg-white px-2.5 py-1 rounded-md border border-gray-200">0 pages</span>
-                </div>
-                <div>
-                    <label class="sleek-label">Page Range</label>
-                    <div class="flex items-center gap-3">
-                        <input type="number" id="splitStartPage" min="1" placeholder="From" class="sleek-input">
-                        <span class="text-gray-400 font-bold">to</span>
-                        <input type="number" id="splitEndPage" min="1" placeholder="To" class="sleek-input">
-                    </div>
-                </div>
-            </div>
-            <button id="splitBtn" class="action-btn" disabled>Extract Pages</button>
-            <div id="splitStatus" class="hidden"></div>
-            <button id="splitResetBtn" class="reset-btn hidden" onclick="resetTool('split')">Process Another File</button>
-        </div>
-
-        <!-- 3. IMG TO PDF -->
-        <div id="imgView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">Image to PDF</h2>
-            <p class="text-gray-500 mb-6 text-sm">Convert JPG or PNG images into a single PDF. Drag to reorder.</p>
-            <input type="file" id="imgFileInput" accept="image/jpeg, image/png" multiple class="modern-file-input mb-4">
-            <ul id="imgFileList" class="mb-6 space-y-2 text-sm text-gray-700 cursor-move font-medium"></ul>
-            <button id="imgBtn" class="action-btn" disabled>Convert to PDF</button>
-            <div id="imgStatus" class="hidden"></div>
-            <button id="imgResetBtn" class="reset-btn hidden" onclick="resetTool('img')">Process More Images</button>
-        </div>
-
-        <!-- 4. WATERMARK -->
-        <div id="wmView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">Add Watermark</h2>
-            <p class="text-gray-500 mb-6 text-sm">Stamp custom text diagonally across all pages.</p>
-            <input type="file" id="wmFileInput" accept="application/pdf" class="modern-file-input mb-4">
-            <div id="wmControls" class="hidden mb-6 space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <div>
-                    <label class="sleek-label">Watermark Text</label>
-                    <input type="text" id="wmTextInput" value="CONFIDENTIAL" class="sleek-input font-bold text-center tracking-widest text-gray-700">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="sleek-label">Opacity (<span id="wmOpacityVal">15%</span>)</label>
-                        <input type="range" id="wmOpacity" min="0.05" max="0.6" step="0.05" value="0.15" class="w-full accent-gray-900" oninput="document.getElementById('wmOpacityVal').textContent = Math.round(this.value*100)+'%'">
-                    </div>
-                    <div>
-                        <label class="sleek-label">Font Size</label>
-                        <input type="number" id="wmSize" value="50" min="16" max="120" class="sleek-input py-2">
-                    </div>
-                </div>
-            </div>
-            <button id="wmBtn" class="action-btn" disabled>Stamp Document</button>
-            <div id="wmStatus" class="hidden"></div>
-            <button id="wmResetBtn" class="reset-btn hidden" onclick="resetTool('wm')">Process Another File</button>
-        </div>
-
-        <!-- 5. NUMBERING -->
-        <div id="numView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">Page Numbers</h2>
-            <p class="text-gray-500 mb-6 text-sm">Add sequential page numbers to your document.</p>
-            <input type="file" id="numFileInput" accept="application/pdf" class="modern-file-input mb-4">
             
-            <div id="numControls" class="hidden mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="sleek-label">Vertical Position</label>
-                        <select id="numVPos" class="sleek-input">
-                            <option value="bottom">Bottom</option>
-                            <option value="top">Top</option>
-                        </select>
+            <!-- Hero Header -->
+            <div class="flex flex-col items-center text-center max-w-3xl mx-auto mb-12">
+                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight mb-3">
+                    <span class="bg-gradient-to-r from-purple-400 via-[#3b82f6] to-[#22d3ee] bg-clip-text text-transparent">Zero-Cloud Browser Utility</span> <span class="text-white">Suite</span>
+                </h1>
+                <p class="text-lg sm:text-xl text-slate-300 mb-6 font-medium">
+                    WebAssembly & Web Audio Powered · Works Offline
+                </p>
+                <p class="text-sm sm:text-base text-slate-400 leading-relaxed px-4">
+                    Convert media, extract audio, and manipulate sensitive PDFs directly in your browser's memory. Zero server uploads, zero file size limits, and complete privacy.
+                </p>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-10">
+                <!-- Search Bar -->
+                <div class="w-full md:w-64 relative">
+                    <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                    <input type="text" id="toolSearchInput" oninput="filterTools()" placeholder="Search tools..." class="w-full pl-11 pr-4 py-2.5 rounded-xl bg-[#1a1924] border border-slate-700/80 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 shadow-sm transition-all">
+                </div>
+
+                <!-- Category Filter Pills -->
+                <div class="flex flex-wrap items-center justify-center gap-3" id="categoryPills">
+                    <button onclick="setCategory('all')" data-cat="all" class="cat-pill px-5 py-2 rounded-full text-sm font-medium border border-white text-white transition-colors bg-white/10 hover:bg-white/20">
+                        All Tools
+                    </button>
+                    <button onclick="setCategory('media')" data-cat="media" class="cat-pill px-5 py-2 rounded-full text-sm font-medium border border-cyan-400 text-slate-200 transition-colors hover:bg-white/10">
+                        Media & Audio
+                    </button>
+                    <button onclick="setCategory('pdf')" data-cat="pdf" class="cat-pill px-5 py-2 rounded-full text-sm font-medium border border-pink-500 text-slate-200 transition-colors hover:bg-white/10">
+                        PDF & Documents
+                    </button>
+                    <button onclick="setCategory('security')" data-cat="security" class="cat-pill px-5 py-2 rounded-full text-sm font-medium border border-purple-400 text-slate-200 transition-colors hover:bg-white/10">
+                        Security & Privacy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tools Bento Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5" id="toolGrid">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+            <!-- Empty Search State -->
+            <div id="emptySearchState" class="hidden text-center py-16 bg-[#11111a] rounded-2xl border border-dashed border-slate-700">
+                <i class="ph-duotone ph-magnifying-glass text-4xl text-slate-500 mb-3 inline-block"></i>
+                <h3 class="text-lg font-bold text-slate-200">No matching tools found</h3>
+                <p class="text-sm text-slate-500 mt-2">Try searching for "audio", "merge", or "sign".</p>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 0: VIDEO TO AUDIO CONVERTER (FULL INTEGRATED WORKSPACE)              -->
+        <!-- ========================================================================= -->
+        <div id="vidAudioView" class="hidden tool-view max-w-5xl mx-auto space-y-6">
+            <!-- Header -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                        <i class="ph-fill ph-waveform text-2xl"></i>
                     </div>
                     <div>
-                        <label class="sleek-label">Horizontal Position</label>
-                        <select id="numHPos" class="sleek-input">
-                            <option value="center">Center</option>
-                            <option value="left">Left</option>
-                            <option value="right">Right</option>
-                        </select>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl sm:text-2xl font-bold text-white">Video to Audio Converter</h2>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">MP3 & WAV</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-400">Extract lossless WAV or high-bitrate MP3 audio tracks from any video locally in RAM.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inline Alert Box for Audio Tool -->
+            <div id="vaAlertBox" class="hidden rounded-xl p-4 border flex items-start gap-3 transition-all">
+                <i id="vaAlertIcon" class="ph-fill text-xl mt-0.5 shrink-0"></i>
+                <div class="flex-grow text-sm">
+                    <h4 id="vaAlertTitle" class="font-semibold"></h4>
+                    <p id="vaAlertMessage" class="opacity-90 mt-0.5 text-xs"></p>
+                </div>
+                <button onclick="document.getElementById('vaAlertBox').classList.add('hidden')" class="opacity-70 hover:opacity-100 p-1">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Step 1: Video Upload Dropzone -->
+            <div id="vaUploadSection">
+                <div id="vaDropZone" onclick="document.getElementById('vaFileInput').click()" class="drop-zone p-8 sm:p-12 group">
+                    <input type="file" id="vaFileInput" accept="video/*,.mp4,.webm,.mov,.mkv,.avi,.ogg,.m4v" class="hidden">
+                    <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="ph-duotone ph-video text-3xl text-cyan-500"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Select or drag & drop a video file</h3>
+                    <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mb-6">
+                        Supports MP4, WebM, MOV, MKV, OGG, and browser-playable formats. Instant zero-upload decoding.
+                    </p>
+                    <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs sm:text-sm shadow-lg transition-all">
+                        <i class="ph-bold ph-folder-open text-base"></i> Choose Video File
+                    </span>
+                </div>
+            </div>
+
+            <!-- Step 2: Active Video Workspace -->
+            <div id="vaWorkspaceSection" class="hidden space-y-6">
+                <!-- File Info Bar -->
+                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-500 shrink-0">
+                            <i class="ph-fill ph-film-strip text-xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 id="vaFileName" class="font-bold text-white text-sm truncate">video.mp4</h4>
+                            <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-400 mt-0.5">
+                                <span id="vaFileSize">0 MB</span>
+                                <span>•</span>
+                                <span id="vaFileType">video/mp4</span>
+                                <span>•</span>
+                                <span id="vaFileDuration" class="font-mono text-cyan-400 font-semibold">00:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="vaChangeFileBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-colors">
+                        <i class="ph-bold ph-arrows-clockwise"></i> Change Video
+                    </button>
+                </div>
+
+                <!-- 2-Column Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left Column: Video Player & Trimmer -->
+                    <div class="lg:col-span-7 bg-slate-950/50 border border-slate-800/90 rounded-2xl p-5 flex flex-col justify-between space-y-5">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                    <i class="ph-fill ph-monitor-play text-cyan-500 text-sm"></i> Video Preview
+                                </span>
+                                <span id="vaTrimBadge" class="text-xs px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono">
+                                    Full Clip
+                                </span>
+                            </div>
+                            <div class="relative rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center border border-slate-800">
+                                <video id="vaVideoPreview" controls class="w-full h-full max-h-[320px] object-contain"></video>
+                            </div>
+                        </div>
+
+                        <!-- Trim Range Controls -->
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                                    <i class="ph-fill ph-scissors text-cyan-500 text-sm"></i> Trim Audio Range
+                                </span>
+                                <button id="vaResetTrimBtn" type="button" class="text-xs text-cyan-500 hover:text-cyan-400 font-semibold">
+                                    Reset Full Duration
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Start -->
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-slate-400">Start Time</span>
+                                        <span id="vaStartTimeLabel" class="font-mono font-semibold text-white">00:00.0</span>
+                                    </div>
+                                    <input type="range" id="vaStartTimeSlider" min="0" max="100" step="0.1" value="0" class="w-full">
+                                    <div class="flex items-center gap-2 pt-1">
+                                        <input type="number" id="vaStartTimeInput" min="0" step="0.1" value="0" class="sleek-input py-1 px-2.5 font-mono text-xs">
+                                        <button type="button" onclick="vaSetTrimFromCurrent('start')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">
+                                            Use Current
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- End -->
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-slate-400">End Time</span>
+                                        <span id="vaEndTimeLabel" class="font-mono font-semibold text-white">00:00.0</span>
+                                    </div>
+                                    <input type="range" id="vaEndTimeSlider" min="0" max="100" step="0.1" value="100" class="w-full">
+                                    <div class="flex items-center gap-2 pt-1">
+                                        <input type="number" id="vaEndTimeInput" min="0" step="0.1" value="0" class="sleek-input py-1 px-2.5 font-mono text-xs">
+                                        <button type="button" onclick="vaSetTrimFromCurrent('end')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">
+                                            Use Current
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Extraction Format & Settings -->
+                    <div class="lg:col-span-5 bg-slate-950/50 border border-slate-800/90 rounded-2xl p-5 flex flex-col justify-between space-y-6">
+                        <div class="space-y-5">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                <i class="ph-fill ph-sliders text-cyan-500 text-sm"></i> Output Audio Settings
+                            </span>
+
+                            <!-- Format Selector -->
+                            <div class="space-y-2">
+                                <label class="block text-xs font-semibold text-slate-300">Audio Format</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button type="button" id="vaFormatMp3Btn" onclick="vaSelectFormat('mp3')" class="p-3.5 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-left transition-all">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="font-bold text-white text-sm">MP3</span>
+                                            <i id="vaMp3Check" class="ph-fill ph-check-circle text-cyan-500 text-lg"></i>
+                                        </div>
+                                        <span class="text-[11px] text-slate-400 block leading-tight">Universal compatibility</span>
+                                    </button>
+                                    <button type="button" id="vaFormatWavBtn" onclick="vaSelectFormat('wav')" class="p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900 text-left transition-all">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="font-bold text-white text-sm">WAV</span>
+                                            <i id="vaWavCheck" class="ph-fill ph-check-circle text-cyan-500 text-lg hidden"></i>
+                                        </div>
+                                        <span class="text-[11px] text-slate-400 block leading-tight">Uncompressed 16-bit</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- MP3 Bitrate Selector -->
+                            <div id="vaBitrateContainer" class="space-y-2 transition-all">
+                                <label class="block text-xs font-semibold text-slate-300">MP3 Bitrate Quality</label>
+                                <div class="grid grid-cols-3 gap-2.5">
+                                    <button type="button" onclick="vaSelectBitrate(128)" data-kbps="128" class="va-bitrate-btn py-2.5 px-3 rounded-xl border border-slate-800 bg-slate-900 text-center transition-all">
+                                        <div class="text-xs font-bold text-white">128 kbps</div>
+                                        <div class="text-[10px] text-slate-400">Standard</div>
+                                    </button>
+                                    <button type="button" onclick="vaSelectBitrate(192)" data-kbps="192" class="va-bitrate-btn py-2.5 px-3 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-center transition-all">
+                                        <div class="text-xs font-bold text-white">192 kbps</div>
+                                        <div class="text-[10px] text-cyan-400 font-medium">High Quality</div>
+                                    </button>
+                                    <button type="button" onclick="vaSelectBitrate(320)" data-kbps="320" class="va-bitrate-btn py-2.5 px-3 rounded-xl border border-slate-800 bg-slate-900 text-center transition-all">
+                                        <div class="text-xs font-bold text-white">320 kbps</div>
+                                        <div class="text-[10px] text-slate-400">Studio Max</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Audio Channels -->
+                            <div class="space-y-2">
+                                <label class="block text-xs font-semibold text-slate-300">Channels</label>
+                                <div class="grid grid-cols-2 gap-2.5">
+                                    <button type="button" id="vaChStereoBtn" onclick="vaSelectChannels('stereo')" class="py-2.5 px-3 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-xs font-semibold text-white flex items-center justify-center gap-2">
+                                        <i class="ph-fill ph-speaker-high text-cyan-500"></i> Stereo (2ch)
+                                    </button>
+                                    <button type="button" id="vaChMonoBtn" onclick="vaSelectChannels('mono')" class="py-2.5 px-3 rounded-xl border border-slate-800 bg-slate-900 text-xs font-semibold text-slate-300 flex items-center justify-center gap-2">
+                                        <i class="ph-fill ph-speaker-simple-high text-slate-400"></i> Mono (1ch)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Output Summary Card -->
+                            <div class="rounded-xl bg-slate-900 border border-slate-800 p-3.5 space-y-2 text-xs">
+                                <div class="flex justify-between text-slate-400">
+                                    <span>Selected Duration:</span>
+                                    <span id="vaSummaryDuration" class="font-mono font-semibold text-white">00:00.0</span>
+                                </div>
+                                <div class="flex justify-between text-slate-400">
+                                    <span>Estimated File Size:</span>
+                                    <span id="vaSummarySize" class="font-mono font-semibold text-white">~0 MB</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress & Convert Trigger -->
+                        <div class="space-y-3 pt-2">
+                            <div id="vaProgressContainer" class="hidden space-y-2 bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span id="vaProgressText" class="text-cyan-400 font-semibold flex items-center gap-2">
+                                        <i class="ph ph-spinner animate-spin text-sm"></i> Decoding audio...
+                                    </span>
+                                    <span id="vaProgressPct" class="font-mono font-bold text-white">0%</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                    <div id="vaProgressBar" class="h-full bg-gradient-to-r from-cyan-400 to-purple-500 w-0 transition-all duration-150"></div>
+                                </div>
+                            </div>
+
+                            <button type="button" id="vaConvertBtn" onclick="vaStartConversion()" class="action-btn">
+                                <i class="ph-bold ph-magic-wand text-lg"></i>
+                                <span>Extract Audio Now</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Extracted Audio Result & Waveform Card -->
+                <div id="vaResultSection" class="hidden bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                                <i class="ph-fill ph-check-fat text-2xl"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-base font-bold text-white">Audio Extracted Successfully!</h3>
+                                    <span id="vaOutBadge" class="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">MP3</span>
+                                </div>
+                                <p id="vaOutDetails" class="text-xs text-slate-400 mt-0.5">audio.mp3 • 0 MB</p>
+                            </div>
+                        </div>
+
+                        <a id="vaDownloadBtn" href="#" download="audio.mp3" class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all shrink-0">
+                            <i class="ph-bold ph-download-simple text-lg"></i> Download Audio File
+                        </a>
+                    </div>
+
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3">
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span class="flex items-center gap-1.5 font-medium">
+                                <i class="ph-fill ph-waveform text-emerald-400"></i> Extracted Audio Waveform Preview
+                            </span>
+                            <span id="vaTimeInfo" class="font-mono text-[11px]">Processed locally</span>
+                        </div>
+                        <div class="w-full h-16 bg-slate-900 rounded-lg overflow-hidden border border-slate-800">
+                            <canvas id="vaWaveformCanvas" class="w-full h-full block"></canvas>
+                        </div>
+                        <audio id="vaAudioPreview" controls class="w-full h-10"></audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 1: MERGE PDF                                                         -->
+        <!-- ========================================================================= -->
+        <div id="mergeView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-files text-3xl text-indigo-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Merge PDFs</h2>
+                    <p class="text-xs text-slate-400">Combine multiple PDF files into one document. Drag items to reorder.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('mergeFileInput').click()" class="drop-zone mb-5" id="mergeDropZone">
+                <input type="file" id="mergeFileInput" accept="application/pdf" multiple class="hidden">
+                <i class="ph-duotone ph-file-pdf text-3xl text-indigo-500 mb-2 inline-block"></i>
+                <p class="text-sm font-semibold text-white">Click or drop PDF files here to add</p>
+                <p class="text-xs text-slate-500 mt-0.5">You can add multiple files across batches</p>
+            </div>
+
+            <div id="mergeListHeader" class="hidden flex items-center justify-between mb-2 text-xs font-semibold text-slate-400">
+                <span id="mergeCountLabel">0 files selected (Drag to reorder)</span>
+                <button onclick="resetTool('merge')" class="text-rose-500 hover:underline">Clear All</button>
+            </div>
+            <ul id="mergeFileList" class="mb-6 space-y-2 text-sm cursor-move"></ul>
+
+            <button id="mergeBtn" class="action-btn" disabled><i class="ph-bold ph-git-merge text-lg"></i> Merge Documents</button>
+            <div id="mergeStatus" class="hidden"></div>
+            <button id="mergeResetBtn" class="reset-btn hidden" onclick="resetTool('merge')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Merge More Files</button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 2: SPLIT PDF                                                         -->
+        <!-- ========================================================================= -->
+        <div id="splitView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-scissors text-3xl text-violet-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Split / Extract PDF</h2>
+                    <p class="text-xs text-slate-400">Extract a page range or custom pages into a new PDF file.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('splitFileInput').click()" class="drop-zone mb-5" id="splitDropZone">
+                <input type="file" id="splitFileInput" accept="application/pdf" class="hidden">
+                <i class="ph-duotone ph-scissors text-3xl text-violet-500 mb-2 inline-block"></i>
+                <p id="splitFileLabel" class="text-sm font-semibold text-white">Select or drop a PDF document</p>
+                <p id="splitPageBadge" class="text-xs text-slate-500 mt-0.5">Extracts cleanly without quality loss</p>
+            </div>
+
+            <div id="splitControls" class="hidden mb-6 space-y-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="sleek-label">From Page</label>
+                        <input type="number" id="splitStartPage" min="1" placeholder="1" class="sleek-input font-mono">
+                    </div>
+                    <div>
+                        <label class="sleek-label">To Page</label>
+                        <input type="number" id="splitEndPage" min="1" placeholder="1" class="sleek-input font-mono">
                     </div>
                 </div>
                 <div>
-                    <label class="sleek-label">Format Style</label>
-                    <select id="numFormat" class="sleek-input">
-                        <option value="simple">Page 1, Page 2...</option>
-                        <option value="ofTotal">Page 1 of N</option>
-                        <option value="numOnly">1, 2, 3...</option>
+                    <label class="sleek-label">Or Custom Pages / Ranges (Optional)</label>
+                    <input type="text" id="splitCustomRange" placeholder="e.g. 1, 3-5, 8 (leaves From/To ignored if filled)" class="sleek-input font-mono text-xs">
+                </div>
+            </div>
+
+            <button id="splitBtn" class="action-btn" disabled><i class="ph-bold ph-export text-lg"></i> Extract Pages</button>
+            <div id="splitStatus" class="hidden"></div>
+            <button id="splitResetBtn" class="reset-btn hidden" onclick="resetTool('split')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Split Another PDF</button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 3: IMAGE TO PDF                                                      -->
+        <!-- ========================================================================= -->
+        <div id="imgView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-images text-3xl text-pink-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Images to PDF</h2>
+                    <p class="text-xs text-slate-400">Combine JPG, PNG, or WebP images into a clean PDF document.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('imgFileInput').click()" class="drop-zone mb-5" id="imgDropZone">
+                <input type="file" id="imgFileInput" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
+                <i class="ph-duotone ph-image text-3xl text-pink-500 mb-2 inline-block"></i>
+                <p class="text-sm font-semibold text-white">Click or drop images here (JPG, PNG, WebP)</p>
+                <p class="text-xs text-slate-500 mt-0.5">Drag list items below to reorder pages</p>
+            </div>
+
+            <div id="imgControls" class="hidden mb-4">
+                <div class="flex items-center justify-between mb-2 text-xs font-semibold text-slate-400">
+                    <span id="imgCountLabel">0 images selected</span>
+                    <button onclick="resetTool('img')" class="text-rose-500 hover:underline">Clear All</button>
+                </div>
+                <ul id="imgFileList" class="mb-4 space-y-2 text-sm cursor-move"></ul>
+                <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                    <label class="sleek-label">Page Size Layout</label>
+                    <select id="imgPageSize" class="sleek-input">
+                        <option value="fit">Fit Page to Original Image Dimensions</option>
+                        <option value="a4-p">A4 Portrait (Centered with margin)</option>
+                        <option value="a4-l">A4 Landscape (Centered with margin)</option>
                     </select>
                 </div>
             </div>
 
-            <button id="numBtn" class="action-btn" disabled>Add Numbers</button>
-            <div id="numStatus" class="hidden"></div>
-            <button id="numResetBtn" class="reset-btn hidden" onclick="resetTool('num')">Process Another File</button>
+            <button id="imgBtn" class="action-btn" disabled><i class="ph-bold ph-file-pdf text-lg"></i> Convert to PDF</button>
+            <div id="imgStatus" class="hidden"></div>
+            <button id="imgResetBtn" class="reset-btn hidden" onclick="resetTool('img')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Convert More Images</button>
         </div>
 
-        <!-- 6. METADATA -->
-        <div id="metaView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">Edit Metadata</h2>
-            <p class="text-gray-500 mb-6 text-sm">Inspect or update hidden document properties.</p>
-            <input type="file" id="metaFileInput" accept="application/pdf" class="modern-file-input mb-4">
-            <div id="metaControls" class="hidden space-y-4 mb-6">
-                <div><label class="sleek-label">Title</label><input type="text" id="metaTitle" class="sleek-input"></div>
-                <div><label class="sleek-label">Author</label><input type="text" id="metaAuthor" class="sleek-input"></div>
-                <div><label class="sleek-label">Subject</label><input type="text" id="metaSubject" class="sleek-input"></div>
-            </div>
-            <button id="metaBtn" class="action-btn" disabled>Save Metadata</button>
-            <div id="metaStatus" class="hidden"></div>
-            <button id="metaResetBtn" class="reset-btn hidden" onclick="resetTool('meta')">Process Another File</button>
-        </div>
-
-        <!-- 7. UNLOCK -->
-        <div id="unlockView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">Unlock PDF</h2>
-            <p class="text-gray-500 mb-6 text-sm">Remove password security from an encrypted PDF.</p>
-            <input type="file" id="unlockFileInput" accept="application/pdf" class="modern-file-input mb-4">
-            <div id="unlockControls" class="hidden mb-6">
-                <label class="sleek-label">Document Password</label>
-                <input type="password" id="unlockPwd" placeholder="Enter current password" class="sleek-input text-lg tracking-widest font-bold">
-            </div>
-            <button id="unlockBtn" class="action-btn" disabled>Decrypt Document</button>
-            <div id="unlockStatus" class="hidden"></div>
-            <button id="unlockResetBtn" class="reset-btn hidden" onclick="resetTool('unlock')">Unlock Another File</button>
-        </div>
-
-        <!-- 8. PROTECT -->
-        <div id="protectView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">Protect PDF</h2>
-            <p class="text-gray-500 mb-6 text-sm">Secure with 256-bit AES encryption offline via WebAssembly.</p>
-            <input type="file" id="protectFileInput" accept="application/pdf" class="modern-file-input mb-4">
-            
-            <div id="protectControls" class="hidden space-y-4 mb-6">
-                <div><label class="sleek-label">Password to Open</label><input type="password" id="protectUserPw" class="sleek-input"></div>
-                <div><label class="sleek-label">Owner Password (Optional)</label><input type="password" id="protectOwnerPw" class="sleek-input"></div>
-                
-                <div class="pt-4 mt-2 border-t border-gray-100">
-                    <label class="sleek-label mb-3">Permissions</label>
-                    <label class="flex items-center space-x-3 mb-2 cursor-pointer"><input type="checkbox" id="cbNoPrint" class="w-4 h-4 text-gray-900 rounded focus:ring-gray-900"> <span class="text-sm font-medium">Disable Printing</span></label>
-                    <label class="flex items-center space-x-3 mb-2 cursor-pointer"><input type="checkbox" id="cbNoCopy" class="w-4 h-4 text-gray-900 rounded focus:ring-gray-900"> <span class="text-sm font-medium">Disable Copying Text</span></label>
-                    <label class="flex items-center space-x-3 cursor-pointer"><input type="checkbox" id="cbNoEdit" class="w-4 h-4 text-gray-900 rounded focus:ring-gray-900"> <span class="text-sm font-medium">Disable Editing</span></label>
+        <!-- ========================================================================= -->
+        <!-- TOOL 4: WATERMARK PDF                                                     -->
+        <!-- ========================================================================= -->
+        <div id="wmView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-stamp text-3xl text-amber-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Watermark PDF</h2>
+                    <p class="text-xs text-slate-400">Stamp custom text across all pages with adjustable size, angle, and opacity.</p>
                 </div>
             </div>
 
-            <button id="protectBtn" class="action-btn" disabled>Encrypt Document</button>
-            <div id="protectStatus" class="hidden"></div>
-            <button id="protectResetBtn" class="reset-btn hidden" onclick="resetTool('protect')">Protect Another File</button>
-        </div>
+            <div onclick="document.getElementById('wmFileInput').click()" class="drop-zone mb-5" id="wmDropZone">
+                <input type="file" id="wmFileInput" accept="application/pdf" class="hidden">
+                <i class="ph-duotone ph-stamp text-3xl text-amber-500 mb-2 inline-block"></i>
+                <p id="wmFileLabel" class="text-sm font-semibold text-white">Select or drop a PDF file</p>
+            </div>
 
-        <!-- 9. PDF TO IMG -->
-        <div id="pdfImgView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">PDF to Images</h2>
-            <p class="text-gray-500 mb-6 text-sm">Render every PDF page as a high-resolution JPG archive.</p>
-            <input type="file" id="pdfImgFileInput" accept="application/pdf" class="modern-file-input mb-4">
-            <button id="pdfImgBtn" class="action-btn" disabled>Download as ZIP</button>
-            <div id="pdfImgStatus" class="hidden"></div>
-            <button id="pdfImgResetBtn" class="reset-btn hidden" onclick="resetTool('pdfImg')">Process Another File</button>
-        </div>
-
-        <!-- 10. E-SIGN -->
-        <div id="signView" class="hidden tool-view bg-white rounded-2xl border border-gray-200 p-8 max-w-xl mx-auto animate-fade-in">
-            <h2 class="text-2xl font-bold mb-1">E-Sign PDF</h2>
-            <p class="text-gray-500 mb-6 text-sm">Draw and stamp your signature onto your document.</p>
-            <input type="file" id="signFileInput" accept="application/pdf" class="modern-file-input mb-4">
-            
-            <div id="signControls" class="hidden mb-6">
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4 space-y-3">
-                    <label class="sleek-label mb-1">Signature Placement & Target</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <select id="signVPos" class="sleek-input">
-                            <option value="bottom">Bottom</option>
-                            <option value="middle">Middle</option>
-                            <option value="top">Top</option>
+            <div id="wmControls" class="hidden mb-6 space-y-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                <div>
+                    <label class="sleek-label">Watermark Text</label>
+                    <input type="text" id="wmTextInput" value="CONFIDENTIAL" class="sleek-input font-bold tracking-widest text-center">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="sleek-label">Font Size (<span id="wmSizeVal">48</span>pt)</label>
+                        <input type="range" id="wmSizeInput" min="18" max="96" value="48" oninput="document.getElementById('wmSizeVal').textContent=this.value" class="w-full mt-2">
+                    </div>
+                    <div>
+                        <label class="sleek-label">Opacity (<span id="wmOpacityVal">18</span>%)</label>
+                        <input type="range" id="wmOpacityInput" min="5" max="80" value="18" oninput="document.getElementById('wmOpacityVal').textContent=this.value" class="w-full mt-2">
+                    </div>
+                    <div>
+                        <label class="sleek-label">Color</label>
+                        <select id="wmColorInput" class="sleek-input">
+                            <option value="gray">Slate Gray</option>
+                            <option value="red">Crimson Red</option>
+                            <option value="blue">Royal Blue</option>
                         </select>
-                        <select id="signHPos" class="sleek-input">
-                            <option value="right">Right</option>
+                    </div>
+                </div>
+            </div>
+
+            <button id="wmBtn" class="action-btn" disabled><i class="ph-bold ph-stamp text-lg"></i> Stamp Document</button>
+            <div id="wmStatus" class="hidden"></div>
+            <button id="wmResetBtn" class="reset-btn hidden" onclick="resetTool('wm')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Watermark Another File</button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 5: PAGE NUMBERS                                                      -->
+        <!-- ========================================================================= -->
+        <div id="numView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-hash text-3xl text-blue-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Page Numbers</h2>
+                    <p class="text-xs text-slate-400">Insert formatted page numbering in the header or footer of your PDF.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('numFileInput').click()" class="drop-zone mb-5" id="numDropZone">
+                <input type="file" id="numFileInput" accept="application/pdf" class="hidden">
+                <i class="ph-duotone ph-list-numbers text-3xl text-blue-500 mb-2 inline-block"></i>
+                <p id="numFileLabel" class="text-sm font-semibold text-white">Select or drop a PDF file</p>
+            </div>
+            
+            <div id="numControls" class="hidden mb-6 bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="sleek-label">Vertical Position</label>
+                        <select id="numVPos" class="sleek-input">
+                            <option value="bottom">Bottom Footer</option>
+                            <option value="top">Top Header</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="sleek-label">Horizontal Align</label>
+                        <select id="numHPos" class="sleek-input">
                             <option value="center">Center</option>
+                            <option value="right">Right</option>
                             <option value="left">Left</option>
                         </select>
-                        <select id="signPageTarget" class="sleek-input">
+                    </div>
+                    <div>
+                        <label class="sleek-label">Label Format</label>
+                        <select id="numFormat" class="sleek-input">
+                            <option value="page_n_of_t">Page 1 of N</option>
+                            <option value="page_n">Page 1</option>
+                            <option value="n_slash_t">1 / N</option>
+                            <option value="plain_n">1</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button id="numBtn" class="action-btn" disabled><i class="ph-bold ph-hash text-lg"></i> Add Page Numbers</button>
+            <div id="numStatus" class="hidden"></div>
+            <button id="numResetBtn" class="reset-btn hidden" onclick="resetTool('num')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Number Another File</button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 6: METADATA EDITOR                                                   -->
+        <!-- ========================================================================= -->
+        <div id="metaView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-code text-3xl text-teal-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Edit PDF Metadata</h2>
+                    <p class="text-xs text-slate-400">View, modify, or strip hidden document properties and author fields.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('metaFileInput').click()" class="drop-zone mb-5" id="metaDropZone">
+                <input type="file" id="metaFileInput" accept="application/pdf" class="hidden">
+                <i class="ph-duotone ph-file-code text-3xl text-teal-500 mb-2 inline-block"></i>
+                <p id="metaFileLabel" class="text-sm font-semibold text-white">Select or drop a PDF file to inspect</p>
+            </div>
+
+            <div id="metaControls" class="hidden space-y-4 mb-6 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="sleek-label">Document Title</label><input type="text" id="metaTitle" placeholder="Untitled" class="sleek-input"></div>
+                    <div><label class="sleek-label">Author</label><input type="text" id="metaAuthor" placeholder="Author Name" class="sleek-input"></div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="sleek-label">Subject</label><input type="text" id="metaSubject" placeholder="Subject" class="sleek-input"></div>
+                    <div><label class="sleek-label">Creator Application</label><input type="text" id="metaCreator" placeholder="LocalTools Studio" class="sleek-input"></div>
+                </div>
+                <div>
+                    <label class="sleek-label">Keywords (Comma separated)</label>
+                    <input type="text" id="metaKeywords" placeholder="report, finance, 2026" class="sleek-input">
+                </div>
+            </div>
+
+            <button id="metaBtn" class="action-btn" disabled><i class="ph-bold ph-floppy-disk text-lg"></i> Save Metadata</button>
+            <div id="metaStatus" class="hidden"></div>
+            <button id="metaResetBtn" class="reset-btn hidden" onclick="resetTool('meta')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Edit Another File</button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 7: UNLOCK PDF                                                        -->
+        <!-- ========================================================================= -->
+        <div id="unlockView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-lock-open text-3xl text-emerald-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Unlock PDF</h2>
+                    <p class="text-xs text-slate-400">Remove password protection and restrictions from an encrypted PDF via QPDF WebAssembly.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('unlockFileInput').click()" class="drop-zone mb-5" id="unlockDropZone">
+                <input type="file" id="unlockFileInput" accept="application/pdf" class="hidden">
+                <i class="ph-duotone ph-lock-key-open text-3xl text-emerald-500 mb-2 inline-block"></i>
+                <p id="unlockFileLabel" class="text-sm font-semibold text-white">Select or drop an encrypted PDF file</p>
+            </div>
+
+            <div id="unlockControls" class="hidden mb-6 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                <label class="sleek-label">Document Password</label>
+                <div class="relative">
+                    <input type="password" id="unlockPwd" placeholder="Enter current password..." class="sleek-input pr-10 font-mono">
+                    <button type="button" onclick="togglePasswordField('unlockPwd')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                        <i class="ph ph-eye text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button id="unlockBtn" class="action-btn" disabled><i class="ph-bold ph-key text-lg"></i> Decrypt Document</button>
+            <div id="unlockStatus" class="hidden"></div>
+            <button id="unlockResetBtn" class="reset-btn hidden" onclick="resetTool('unlock')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Unlock Another File</button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 8: PROTECT PDF                                                       -->
+        <!-- ========================================================================= -->
+        <div id="protectView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-shield-check text-3xl text-rose-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Protect PDF</h2>
+                    <p class="text-xs text-slate-400">Encrypt your PDF with 256-bit AES security and granular permission flags.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('protectFileInput').click()" class="drop-zone mb-5" id="protectDropZone">
+                <input type="file" id="protectFileInput" accept="application/pdf" class="hidden">
+                <i class="ph-duotone ph-shield-lock text-3xl text-rose-500 mb-2 inline-block"></i>
+                <p id="protectFileLabel" class="text-sm font-semibold text-white">Select or drop a PDF file to encrypt</p>
+            </div>
+            
+            <div id="protectControls" class="hidden space-y-4 mb-6 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="sleek-label">Password to Open (Required)</label>
+                        <div class="relative">
+                            <input type="password" id="protectUserPw" placeholder="User password" class="sleek-input pr-10 font-mono">
+                            <button type="button" onclick="togglePasswordField('protectUserPw')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><i class="ph ph-eye text-lg"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="sleek-label">Owner Password (Optional)</label>
+                        <div class="relative">
+                            <input type="password" id="protectOwnerPw" placeholder="Defaults to user password" class="sleek-input pr-10 font-mono">
+                            <button type="button" onclick="togglePasswordField('protectOwnerPw')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><i class="ph ph-eye text-lg"></i></button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pt-3 border-t border-slate-800">
+                    <label class="sleek-label mb-3">Document Restrictions</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-900 border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="cbNoPrint" class="w-4 h-4 accent-cyan-500 rounded">
+                            <span class="text-xs font-medium text-slate-300">Disable Printing</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-900 border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="cbNoCopy" class="w-4 h-4 accent-cyan-500 rounded">
+                            <span class="text-xs font-medium text-slate-300">Disable Copying</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-900 border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="cbNoEdit" class="w-4 h-4 accent-cyan-500 rounded">
+                            <span class="text-xs font-medium text-slate-300">Disable Modifying</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button id="protectBtn" class="action-btn" disabled><i class="ph-bold ph-lock-key text-lg"></i> Encrypt Document (AES-256)</button>
+            <div id="protectStatus" class="hidden"></div>
+            <button id="protectResetBtn" class="reset-btn hidden" onclick="resetTool('protect')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Protect Another File</button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 9: PDF TO IMAGES                                                     -->
+        <!-- ========================================================================= -->
+        <div id="pdfImgView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-file-image text-3xl text-cyan-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">PDF to Images</h2>
+                    <p class="text-xs text-slate-400">Render every PDF page into high-resolution JPG or PNG images packaged in a ZIP.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('pdfImgFileInput').click()" class="drop-zone mb-5" id="pdfImgDropZone">
+                <input type="file" id="pdfImgFileInput" accept="application/pdf" class="hidden">
+                <i class="ph-duotone ph-images-square text-3xl text-cyan-500 mb-2 inline-block"></i>
+                <p id="pdfImgFileLabel" class="text-sm font-semibold text-white">Select or drop a PDF file to render</p>
+            </div>
+
+            <div id="pdfImgControls" class="hidden mb-6 bg-slate-950/60 p-4 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="sleek-label">Image Format</label>
+                    <select id="pdfImgFormat" class="sleek-input">
+                        <option value="jpeg">JPEG (Compact Size)</option>
+                        <option value="png">PNG (Lossless Crisp Text)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="sleek-label">Render Resolution (DPI Scale)</label>
+                    <select id="pdfImgScale" class="sleek-input">
+                        <option value="2">High Resolution (2x Scale)</option>
+                        <option value="1.5">Standard Resolution (1.5x Scale)</option>
+                        <option value="3">Ultra HD Print (3x Scale)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="pdfImgBtn" class="action-btn" disabled><i class="ph-bold ph-file-zip text-lg"></i> Render & Download ZIP</button>
+            <div id="pdfImgStatus" class="hidden"></div>
+            <button id="pdfImgResetBtn" class="reset-btn hidden" onclick="resetTool('pdfImg')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Convert Another PDF</button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TOOL 10: E-SIGN PDF                                                       -->
+        <!-- ========================================================================= -->
+        <div id="signView" class="hidden tool-view max-w-2xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="ph-fill ph-signature text-3xl text-fuchsia-400"></i>
+                <div>
+                    <h2 class="text-xl font-bold text-white">E-Sign PDF</h2>
+                    <p class="text-xs text-slate-400">Draw your signature on the pad and stamp it onto your PDF document.</p>
+                </div>
+            </div>
+
+            <div onclick="document.getElementById('signFileInput').click()" class="drop-zone mb-5" id="signDropZone">
+                <input type="file" id="signFileInput" accept="application/pdf" class="hidden">
+                <i class="ph-duotone ph-pen-nib text-3xl text-fuchsia-500 mb-2 inline-block"></i>
+                <p id="signFileLabel" class="text-sm font-semibold text-white">Select or drop a PDF file to sign</p>
+            </div>
+            
+            <div id="signControls" class="hidden mb-6 space-y-4">
+                <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="sleek-label">Target Page</label>
+                        <select id="signTargetPage" class="sleek-input">
                             <option value="last">Last Page</option>
                             <option value="first">First Page</option>
                             <option value="all">All Pages</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="sleek-label">Vertical Placement</label>
+                        <select id="signVPos" class="sleek-input">
+                            <option value="bottom">Bottom of Page</option>
+                            <option value="middle">Middle of Page</option>
+                            <option value="top">Top of Page</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="sleek-label">Horizontal Placement</label>
+                        <select id="signHPos" class="sleek-input">
+                            <option value="right">Right Side</option>
+                            <option value="center">Center</option>
+                            <option value="left">Left Side</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
-                    <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex justify-between items-center">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Signature Pad</span>
-                        <button type="button" onclick="signaturePad.clear()" class="text-xs font-bold text-gray-600 hover:text-gray-900 transition">Clear Pad</button>
+                <!-- High-DPI Signature Pad Container -->
+                <div class="border border-slate-700 rounded-xl bg-white overflow-hidden shadow-sm">
+                    <div class="bg-slate-800 border-b border-slate-700 px-4 py-2.5 flex flex-wrap justify-between items-center gap-2">
+                        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="ph-fill ph-scribble-loop text-fuchsia-500"></i> Draw Signature Below
+                        </span>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="setSigColor('rgb(17, 24, 39)')" class="w-5 h-5 rounded-full bg-slate-900 border-2 border-white shadow" title="Black Ink"></button>
+                                <button type="button" onclick="setSigColor('rgb(29, 78, 216)')" class="w-5 h-5 rounded-full bg-blue-700 border-2 border-white shadow" title="Blue Ink"></button>
+                                <button type="button" onclick="setSigColor('rgb(185, 28, 28)')" class="w-5 h-5 rounded-full bg-red-700 border-2 border-white shadow" title="Red Ink"></button>
+                            </div>
+                            <button type="button" onclick="signaturePad.clear()" class="text-xs font-bold text-rose-500 hover:underline">Clear Pad</button>
+                        </div>
                     </div>
-                    <canvas id="sigCanvas" width="500" height="200" class="cursor-crosshair w-full"></canvas>
+                    <canvas id="sigCanvas" class="cursor-crosshair w-full h-48 block bg-white"></canvas>
                 </div>
             </div>
 
-            <button id="signBtn" class="action-btn" disabled>Sign & Download</button>
+            <button id="signBtn" class="action-btn" disabled><i class="ph-bold ph-signature text-lg"></i> Sign & Download PDF</button>
             <div id="signStatus" class="hidden"></div>
-            <button id="signResetBtn" class="reset-btn hidden" onclick="resetTool('sign')">Sign Another File</button>
+            <button id="signResetBtn" class="reset-btn hidden" onclick="resetTool('sign')"><i class="ph-bold ph-arrow-counter-clockwise"></i> Sign Another Document</button>
         </div>
 
     </main>
 
+    <!-- ========================================== -->
+    <!-- FOOTER                                     -->
+    <!-- ========================================== -->
+    <footer class="border-t border-slate-800 bg-[#0a0a10]/50 py-5 px-4 sm:px-6 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p class="font-medium text-slate-400">LocalTools Studio — Powered by Web Audio API, PDF-Lib, PDF.js, LameJS & QPDF WebAssembly.</p>
+            <p class="flex items-center gap-1.5 text-emerald-500 font-semibold">
+                <i class="ph-fill ph-lock-key"></i> 100% Client-Side Execution
+            </p>
+        </div>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- UNIFIED APPLICATION JAVASCRIPT             -->
+    <!-- ========================================== -->
     <script>
         // ==========================================
-        // UI RENDERING, FILTERING & ROUTING
+        // 1. TOOL CATALOG & NAVIGATION
         // ==========================================
         const tools = [
-            {id: 'vidAudio', cat: 'media', badge: 'NEW', name: 'Video to Audio', desc: 'Extract MP3 or lossless WAV with trimming & waveform.', icon: 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3', color: 'bg-indigo-50 text-indigo-600'},
-            {id: 'merge', cat: 'pdf', name: 'Merge PDF', desc: 'Combine multiple PDFs into one document.', icon: 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2', color: 'bg-blue-50 text-blue-600'},
-            {id: 'split', cat: 'pdf', name: 'Split PDF', desc: 'Extract page ranges to a new file.', icon: 'M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5', color: 'bg-violet-50 text-violet-600'},
-            {id: 'img', cat: 'pdf', name: 'Img to PDF', desc: 'Convert JPG/PNG images into a PDF.', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', color: 'bg-pink-50 text-pink-600'},
-            {id: 'pdfImg', cat: 'pdf', name: 'PDF to Img', desc: 'Extract PDF pages as high-res JPGs.', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12', color: 'bg-cyan-50 text-cyan-600'},
-            {id: 'sign', cat: 'pdf', name: 'E-Sign PDF', desc: 'Draw and stamp your signature.', icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z', color: 'bg-fuchsia-50 text-fuchsia-600'},
-            {id: 'wm', cat: 'pdf', name: 'Watermark', desc: 'Stamp diagonal text across pages.', icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z', color: 'bg-amber-50 text-amber-600'},
-            {id: 'num', cat: 'pdf', name: 'Page Numbers', desc: 'Add customizable pagination.', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', color: 'bg-sky-50 text-sky-600'},
-            {id: 'meta', cat: 'security', name: 'Metadata', desc: 'Edit or strip hidden document tags.', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', color: 'bg-teal-50 text-teal-600'},
-            {id: 'unlock', cat: 'security', name: 'Unlock PDF', desc: 'Remove PDF password restrictions.', icon: 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z', color: 'bg-emerald-50 text-emerald-600'},
-            {id: 'protect', cat: 'security', name: 'Protect PDF', desc: 'Encrypt with 256-bit AES security.', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', color: 'bg-rose-50 text-rose-600'}
+            {
+                id: 'vidAudio',
+                name: 'Video to Audio Converter',
+                category: 'media',
+                badge: '2026/NEW',
+                desc: 'Extract MP3 (up to 320kbps) or lossless WAV audio from any video file with trimming & waveform',
+                icon: 'ph-video',
+                color: 'text-purple-400'
+            },
+            {
+                id: 'merge',
+                name: 'Merge PDF',
+                category: 'pdf',
+                desc: 'Combine multiple PDF documents into a single file in any order.',
+                icon: 'ph-file-pdf',
+                color: 'text-indigo-400'
+            },
+            {
+                id: 'split',
+                name: 'Split PDF',
+                category: 'pdf',
+                desc: 'Extract page ranges or custom page numbers into a new PDF file.',
+                icon: 'ph-file-dashed',
+                color: 'text-violet-400'
+            },
+            {
+                id: 'img',
+                name: 'Img to PDF',
+                category: 'pdf',
+                desc: 'Convert JPG, PNG, or WebP images into a multi-page PDF document.',
+                icon: 'ph-image',
+                color: 'text-pink-400'
+            },
+            {
+                id: 'pdfImg',
+                name: 'PDF to Images',
+                category: 'pdf',
+                desc: 'Render every page of a PDF into high-DPI JPG or PNG images in a ZIP.',
+                icon: 'ph-images-square',
+                color: 'text-cyan-400'
+            },
+            {
+                id: 'sign',
+                name: 'E-Sign PDF',
+                category: 'pdf',
+                desc: 'Draw your signature smoothly and stamp it onto any page of a PDF.',
+                icon: 'ph-pen-nib',
+                color: 'text-fuchsia-400'
+            },
+            {
+                id: 'wm',
+                name: 'Watermark PDF',
+                category: 'pdf',
+                desc: 'Stamp custom text across all pages with custom size, color, and opacity.',
+                icon: 'ph-stamp',
+                color: 'text-amber-400'
+            },
+            {
+                id: 'num',
+                name: 'Page Numbers',
+                category: 'pdf',
+                desc: 'Add customizable header or footer pagination to any PDF document.',
+                icon: 'ph-list-numbers',
+                color: 'text-blue-400'
+            },
+            {
+                id: 'protect',
+                name: 'Protect PDF',
+                category: 'security',
+                desc: 'Encrypt PDFs with 256-bit AES passwords and restrict printing or copying.',
+                icon: 'ph-shield-check',
+                color: 'text-rose-400'
+            },
+            {
+                id: 'unlock',
+                name: 'Unlock PDF',
+                category: 'security',
+                desc: 'Decrypt password-protected PDF files offline using QPDF WebAssembly.',
+                icon: 'ph-lock-open',
+                color: 'text-emerald-400'
+            },
+            {
+                id: 'meta',
+                name: 'Edit Metadata',
+                category: 'security',
+                desc: 'Inspect, update, or clean hidden PDF title, author, and keyword tags.',
+                icon: 'ph-code',
+                color: 'text-teal-400'
+            }
         ];
 
         let activeCategory = 'all';
-        const grid = document.getElementById('toolGrid');
-        const quickJump = document.getElementById('quickToolJump');
 
+        function renderToolsGrid() {
+            const grid = document.getElementById('toolGrid');
+            const query = (document.getElementById('toolSearchInput').value || '').toLowerCase().trim();
+            grid.innerHTML = '';
+
+            const filtered = tools.filter(t => {
+                const matchesCat = activeCategory === 'all' || t.category === activeCategory;
+                const matchesQuery = !query || t.name.toLowerCase().includes(query) || t.desc.toLowerCase().includes(query) || t.category.includes(query);
+                return matchesCat && matchesQuery;
+            });
+
+            document.getElementById('emptySearchState').classList.toggle('hidden', filtered.length > 0);
+
+            filtered.forEach(t => {
+                const isFeatured = t.id === 'vidAudio';
+                
+                if (isFeatured) {
+                    grid.innerHTML += `
+                        <div onclick="showTool('${t.id}View')" class="col-span-1 md:col-span-2 cursor-pointer bg-gradient-to-br from-[#9333ea] via-[#3b82f6] to-[#06b6d4] p-6 rounded-2xl relative shadow-lg flex flex-col justify-between min-h-[220px] transition-transform hover:-translate-y-1 group">
+                            ${t.badge ? `<div class="absolute top-5 right-5 bg-black/25 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-white tracking-wider">${t.badge}</div>` : ''}
+                            <div>
+                                <div class="flex items-center gap-2 mb-3 text-white">
+                                    <i class="ph-fill ${t.icon} text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-white mb-2">${t.name}</h3>
+                                <p class="text-white/90 text-sm max-w-[85%] leading-relaxed">${t.desc}</p>
+                            </div>
+                            <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
+                                <div class="flex gap-2">
+                                    <span class="bg-white/20 text-white px-3 py-1 rounded-lg text-xs font-medium uppercase tracking-wider">${t.category}</span>
+                                    <span class="bg-white/20 text-white w-7 h-7 rounded-lg flex items-center justify-center"><i class="ph-fill ph-speaker-high"></i></span>
+                                    <span class="bg-white/20 text-white w-7 h-7 rounded-lg flex items-center justify-center"><i class="ph-fill ph-gear"></i></span>
+                                </div>
+                                <button class="bg-white text-slate-900 px-4 py-1.5 rounded-xl text-sm font-semibold flex items-center gap-1 shadow-sm">
+                                    Open Tool <i class="ph-bold ph-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    grid.innerHTML += `
+                        <div onclick="showTool('${t.id}View')" class="col-span-1 cursor-pointer bg-[#11111a] border border-slate-700/60 p-6 rounded-2xl flex flex-col justify-between min-h-[220px] transition-all hover:border-slate-500 hover:-translate-y-1 group">
+                            <div>
+                                <i class="ph-fill ${t.icon} text-3xl ${t.color} mb-3 block"></i>
+                                <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">${t.name}</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed">${t.desc}</p>
+                            </div>
+                            <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+                                <span class="bg-slate-800/50 text-slate-400 border border-slate-700/50 px-3 py-1 rounded-lg text-[10px] uppercase tracking-wider font-semibold">${t.category}</span>
+                                <span class="text-slate-400 text-xs font-medium flex items-center gap-1 group-hover:text-white transition-colors">
+                                    Open Tool <i class="ph-bold ph-arrow-right"></i>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Populate Quick Jump Select
+        const quickJumpSelect = document.getElementById('quickJumpSelect');
         tools.forEach(t => {
             const opt = document.createElement('option');
             opt.value = `${t.id}View`;
             opt.textContent = t.name;
-            quickJump.appendChild(opt);
+            quickJumpSelect.appendChild(opt);
         });
 
-        function renderTools() {
-            const q = document.getElementById('toolSearchInput').value.toLowerCase().trim();
-            grid.innerHTML = '';
-            const filtered = tools.filter(t => {
-                const matchesCat = activeCategory === 'all' || t.cat === activeCategory;
-                const matchesQuery = !q || t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q);
-                return matchesCat && matchesQuery;
-            });
-
-            filtered.forEach(t => {
-                grid.innerHTML += `
-                    <div onclick="showTool('${t.id}View')" class="tool-card">
-                        <div class="flex items-start justify-between">
-                            <div class="tool-icon ${t.color}">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${t.icon}"></path></svg>
-                            </div>
-                            ${t.badge ? `<span class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-600 text-white px-2 py-0.5 rounded-full">${t.badge}</span>` : ''}
-                        </div>
-                        <h3 class="font-bold text-gray-900 mb-1 relative">${t.name}</h3>
-                        <p class="text-gray-500 text-xs font-medium leading-relaxed relative">${t.desc}</p>
-                    </div>
-                `;
-            });
-        }
-
-        function filterCategory(cat) {
+        function setCategory(cat) {
             activeCategory = cat;
             document.querySelectorAll('#categoryPills .cat-pill').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.cat === cat);
+                if (btn.getAttribute('data-cat') === cat) {
+                    btn.classList.add('bg-white/10');
+                    btn.classList.remove('hover:bg-white/10');
+                    btn.classList.add('hover:bg-white/20');
+                } else {
+                    btn.classList.remove('bg-white/10', 'hover:bg-white/20');
+                    btn.classList.add('hover:bg-white/10');
+                }
             });
-            renderTools();
+            renderToolsGrid();
         }
 
-        document.getElementById('toolSearchInput').addEventListener('input', renderTools);
-        renderTools();
+        function filterTools() {
+            renderToolsGrid();
+        }
 
-        function showTool(toolId) {
+        function showTool(toolViewId) {
             document.getElementById('landingView').classList.add('hidden');
             document.querySelectorAll('.tool-view').forEach(el => el.classList.add('hidden'));
-            document.getElementById(toolId).classList.remove('hidden');
-            document.getElementById('navBackBtn').classList.remove('hidden');
-            document.getElementById('quickToolJump').value = toolId;
+            const target = document.getElementById(toolViewId);
+            if (target) {
+                target.classList.remove('hidden');
+            }
+            const backBtn = document.getElementById('navBackBtn');
+            backBtn.classList.remove('hidden');
+            backBtn.classList.add('inline-flex');
+            document.getElementById('quickJumpWrapper').classList.remove('hidden');
+            quickJumpSelect.value = toolViewId;
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (toolViewId === 'signView') {
+                setTimeout(resizeSignatureCanvas, 60);
+            }
         }
-        
+
         function showLanding() {
             document.querySelectorAll('.tool-view').forEach(el => el.classList.add('hidden'));
             document.getElementById('landingView').classList.remove('hidden');
-            document.getElementById('navBackBtn').classList.add('hidden');
-            document.getElementById('quickToolJump').value = '';
+            const backBtn = document.getElementById('navBackBtn');
+            backBtn.classList.add('hidden');
+            backBtn.classList.remove('inline-flex');
+            document.getElementById('quickJumpWrapper').classList.add('hidden');
         }
 
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', e => {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                if (!document.getElementById('landingView').classList.contains('hidden')) {
+                    e.preventDefault();
+                    document.getElementById('toolSearchInput').focus();
+                }
+            } else if (e.key === 'Escape' && document.getElementById('landingView').classList.contains('hidden')) {
+                showLanding();
+            }
+        });
+
+        renderToolsGrid();
+
         // ==========================================
-        // SHARED HELPERS
+        // 2. SHARED HELPERS & DRAG-AND-DROP BINDER
         // ==========================================
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
         function getFileName(file, suffix) {
-            if (!file) return `output_${suffix}`;
+            if (!file) return `document_${suffix}`;
             return `${file.name.replace(/\.[^/.]+$/, "")}_${suffix}`;
         }
 
-        function triggerDownload(bytesOrBlob, filename) {
-            const blob = bytesOrBlob instanceof Blob
-                ? bytesOrBlob
-                : new Blob([bytesOrBlob], { type: filename.endsWith('.zip') ? 'application/zip' : 'application/pdf' });
+        function triggerDownload(data, filename) {
+            const blob = data instanceof Blob ? data : new Blob([data], { type: filename.endsWith('.zip') ? 'application/zip' : 'application/pdf' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.download = filename;
             link.click();
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function togglePasswordField(id) {
+            const el = document.getElementById(id);
+            el.type = el.type === 'password' ? 'text' : 'password';
         }
 
         function updateStatus(prefix, state, msg = "", filename = "") {
@@ -593,34 +1230,18 @@
                 btn.classList.add('hidden');
                 resetBtn.classList.add('hidden');
                 status.classList.remove('hidden');
-                status.className = "mt-4 text-center block animate-pulse text-sm font-bold bg-gray-50 text-gray-800 p-4 rounded-xl border border-gray-200";
-                status.textContent = msg || "Processing locally...";
+                status.className = "mt-4 text-center block animate-pulse text-sm font-semibold bg-cyan-500/10 text-cyan-400 p-4 rounded-xl border border-cyan-500/20";
+                status.innerHTML = `<i class="ph ph-spinner animate-spin mr-1.5 inline-block"></i> ${msg || "Processing locally..."}`;
             } else if (state === 'success') {
-                status.className = "mt-4 text-center block text-sm font-medium bg-emerald-50 text-emerald-900 p-4 rounded-xl border border-emerald-200";
-                status.innerHTML = `<span class="font-bold block mb-0.5">✅ Done!</span>Saved as <span class="font-bold">${filename}</span>`;
+                status.className = "mt-4 text-center block text-sm font-medium bg-emerald-500/10 text-emerald-400 p-4 rounded-xl border border-emerald-500/30";
+                status.innerHTML = `<span class="font-bold block mb-0.5"><i class="ph-fill ph-check-circle mr-1"></i> Completed Successfully!</span>Downloaded as <span class="font-mono font-bold">${filename}</span>`;
                 resetBtn.classList.remove('hidden');
             } else if (state === 'error') {
                 btn.classList.remove('hidden');
-                status.className = "mt-4 text-center block text-sm font-bold bg-red-50 text-red-600 p-4 rounded-xl border border-red-200";
-                status.textContent = "❌ " + msg;
+                status.classList.remove('hidden');
+                status.className = "mt-4 text-center block text-sm font-semibold bg-rose-500/10 text-rose-500 p-4 rounded-xl border border-rose-500/30";
+                status.innerHTML = `<i class="ph-fill ph-warning-circle mr-1"></i> ${msg}`;
             }
-        }
-
-        function resetTool(prefix) {
-            document.getElementById(`${prefix}FileInput`).value = "";
-            const controls = document.getElementById(`${prefix}Controls`);
-            if (controls) controls.classList.add('hidden');
-            
-            const btn = document.getElementById(`${prefix}Btn`);
-            btn.classList.remove('hidden');
-            btn.disabled = true;
-            
-            document.getElementById(`${prefix}Status`).classList.add('hidden');
-            document.getElementById(`${prefix}ResetBtn`).classList.add('hidden');
-            
-            if (prefix === 'merge') document.getElementById('mergeFileList').innerHTML = '';
-            if (prefix === 'img') document.getElementById('imgFileList').innerHTML = '';
-            if (prefix === 'sign' && typeof signaturePad !== 'undefined') signaturePad.clear();
         }
 
         function enableTool(prefix) {
@@ -628,120 +1249,469 @@
             if (controls) controls.classList.remove('hidden');
             const btn = document.getElementById(`${prefix}Btn`);
             btn.disabled = false;
+            document.getElementById(`${prefix}Status`).classList.add('hidden');
         }
+
+        function resetTool(prefix) {
+            const input = document.getElementById(`${prefix}FileInput`);
+            if (input) input.value = "";
+            const controls = document.getElementById(`${prefix}Controls`);
+            if (controls) controls.classList.add('hidden');
+            
+            const btn = document.getElementById(`${prefix}Btn`);
+            if (btn) {
+                btn.classList.remove('hidden');
+                btn.disabled = true;
+            }
+            
+            const status = document.getElementById(`${prefix}Status`);
+            if (status) status.classList.add('hidden');
+            const resetBtn = document.getElementById(`${prefix}ResetBtn`);
+            if (resetBtn) resetBtn.classList.add('hidden');
+
+            const label = document.getElementById(`${prefix}FileLabel`);
+            if (label) label.textContent = "Select or drop a PDF file";
+            
+            if (prefix === 'merge') {
+                document.getElementById('mergeFileList').innerHTML = '';
+                document.getElementById('mergeListHeader').classList.add('hidden');
+            }
+            if (prefix === 'img') {
+                document.getElementById('imgFileList').innerHTML = '';
+            }
+            if (prefix === 'sign' && typeof signaturePad !== 'undefined') {
+                signaturePad.clear();
+            }
+        }
+
+        // Bind drag-and-drop highlight & file forwarding to all dropzones
+        function bindDropZone(dropZoneId, fileInputId) {
+            const dz = document.getElementById(dropZoneId);
+            const inp = document.getElementById(fileInputId);
+            if (!dz || !inp) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+                dz.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); });
+            });
+            ['dragenter', 'dragover'].forEach(ev => {
+                dz.addEventListener(ev, () => dz.classList.add('drop-zone-active'));
+            });
+            ['dragleave', 'drop'].forEach(ev => {
+                dz.addEventListener(ev, () => dz.classList.remove('drop-zone-active'));
+            });
+            dz.addEventListener('drop', e => {
+                if (e.dataTransfer.files && e.dataTransfer.files.length) {
+                    inp.files = e.dataTransfer.files;
+                    inp.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+
+        ['va', 'merge', 'split', 'img', 'wm', 'num', 'meta', 'unlock', 'protect', 'pdfImg', 'sign'].forEach(p => {
+            bindDropZone(`${p}DropZone`, `${p}FileInput`);
+        });
 
         // ==========================================
-        // 0. VIDEO TO AUDIO CONVERTER LOGIC
+        // 3. VIDEO TO AUDIO CONVERTER LOGIC
         // ==========================================
-        let vaDecodedBuffer = null;
-        let vaSourceFile = null;
-        let vaObjectUrl = null;
+        let vaCurrentFile = null;
+        let vaVideoDuration = 0;
+        let vaSelectedFormat = 'mp3';
+        let vaSelectedBitrate = 192;
+        let vaSelectedChannels = 'stereo';
+        let vaCachedAudioBuffer = null;
+        let vaCachedFileRef = null;
+        let vaCurrentOutUrl = null;
+        let vaIsConverting = false;
 
-        function formatSec(sec) {
-            const m = Math.floor(sec / 60);
-            const s = (sec % 60).toFixed(1);
-            return `${m}:${s.padStart(4, '0')}`;
+        const vaVideoPreview = document.getElementById('vaVideoPreview');
+        const vaStartSlider = document.getElementById('vaStartTimeSlider');
+        const vaEndSlider = document.getElementById('vaEndTimeSlider');
+        const vaStartInput = document.getElementById('vaStartTimeInput');
+        const vaEndInput = document.getElementById('vaEndTimeInput');
+
+        function vaFormatTime(seconds, showTenths = false) {
+            if (!isFinite(seconds) || seconds < 0) seconds = 0;
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            const tenths = Math.floor((seconds % 1) * 10);
+            const mStr = String(mins).padStart(2, '0');
+            const sStr = String(secs).padStart(2, '0');
+            const base = hrs > 0 ? `${String(hrs).padStart(2, '0')}:${mStr}:${sStr}` : `${mStr}:${sStr}`;
+            return showTenths ? `${base}.${tenths}` : base;
         }
 
-        function toggleVaBitrate() {
-            const isMp3 = document.getElementById('vaFormat').value === 'mp3';
-            document.getElementById('vaBitrateGroup').classList.toggle('opacity-40', !isMp3);
-            document.getElementById('vaBitrate').disabled = !isMp3;
+        function vaShowAlert(title, message) {
+            const box = document.getElementById('vaAlertBox');
+            box.className = 'rounded-xl p-4 border flex items-start gap-3 bg-rose-500/10 border-rose-500/30 text-rose-500';
+            document.getElementById('vaAlertIcon').className = 'ph-fill ph-warning-circle text-xl mt-0.5 shrink-0';
+            document.getElementById('vaAlertTitle').textContent = title;
+            document.getElementById('vaAlertMessage').textContent = message;
+            box.classList.remove('hidden');
         }
 
-        document.getElementById('vaFileInput').addEventListener('change', async (e) => {
-            if (!e.target.files.length) return;
-            vaSourceFile = e.target.files[0];
+        document.getElementById('vaFileInput').addEventListener('change', e => {
+            if (e.target.files && e.target.files.length > 0) {
+                vaHandleFile(e.target.files[0]);
+            }
+        });
 
-            const status = document.getElementById('vidAudioStatus');
-            status.classList.remove('hidden');
-            status.className = "mt-4 text-center block animate-pulse text-sm font-bold bg-gray-50 text-gray-800 p-4 rounded-xl border border-gray-200";
-            status.textContent = "Decoding audio stream in browser memory...";
+        document.getElementById('vaChangeFileBtn').addEventListener('click', () => {
+            if (vaIsConverting) return;
+            document.getElementById('vaFileInput').value = '';
+            document.getElementById('vaFileInput').click();
+        });
+
+        function vaHandleFile(file) {
+            document.getElementById('vaAlertBox').classList.add('hidden');
+            vaCurrentFile = file;
+            vaCachedAudioBuffer = null;
+            vaCachedFileRef = null;
+            document.getElementById('vaResultSection').classList.add('hidden');
+
+            document.getElementById('vaFileName').textContent = file.name;
+            document.getElementById('vaFileSize').textContent = formatBytes(file.size);
+            document.getElementById('vaFileType').textContent = file.type || 'video/mp4';
+            document.getElementById('vaFileDuration').textContent = 'Loading...';
+
+            if (vaVideoPreview.src) URL.revokeObjectURL(vaVideoPreview.src);
+            vaVideoPreview.src = URL.createObjectURL(file);
+
+            document.getElementById('vaUploadSection').classList.add('hidden');
+            document.getElementById('vaWorkspaceSection').classList.remove('hidden');
+        }
+
+        vaVideoPreview.addEventListener('loadedmetadata', () => {
+            vaVideoDuration = isFinite(vaVideoPreview.duration) && vaVideoPreview.duration > 0 ? vaVideoPreview.duration : 0;
+            document.getElementById('vaFileDuration').textContent = vaFormatTime(vaVideoDuration);
+            const maxVal = Math.max(0.1, parseFloat(vaVideoDuration.toFixed(1)));
+            vaStartSlider.max = maxVal;
+            vaEndSlider.max = maxVal;
+            vaStartInput.max = maxVal;
+            vaEndInput.max = maxVal;
+            vaResetTrim();
+        });
+
+        vaVideoPreview.addEventListener('error', () => {
+            document.getElementById('vaFileDuration').textContent = 'Direct Stream';
+            vaVideoDuration = 0;
+            vaUpdateSummary();
+        });
+
+        function vaResetTrim() {
+            const maxVal = parseFloat((vaVideoDuration || 100).toFixed(1));
+            vaStartSlider.value = 0;
+            vaStartInput.value = 0;
+            vaEndSlider.value = maxVal;
+            vaEndInput.value = maxVal;
+            vaSyncTrim('reset');
+        }
+
+        document.getElementById('vaResetTrimBtn').addEventListener('click', vaResetTrim);
+
+        function vaSyncTrim(source) {
+            let start = parseFloat(source === 'input' ? vaStartInput.value : vaStartSlider.value) || 0;
+            let end = parseFloat(source === 'input' ? vaEndInput.value : vaEndSlider.value) || 0;
+            const maxDur = vaVideoDuration > 0 ? parseFloat(vaVideoDuration.toFixed(1)) : 100;
+
+            start = Math.max(0, Math.min(start, maxDur - 0.1));
+            end = Math.max(0.1, Math.min(end, maxDur));
+
+            if (start >= end) {
+                if (source === 'start') end = Math.min(maxDur, parseFloat((start + 0.5).toFixed(1)));
+                else start = Math.max(0, parseFloat((end - 0.5).toFixed(1)));
+            }
+
+            vaStartSlider.value = start;
+            vaStartInput.value = start;
+            vaEndSlider.value = end;
+            vaEndInput.value = end;
+
+            document.getElementById('vaStartTimeLabel').textContent = vaFormatTime(start, true);
+            document.getElementById('vaEndTimeLabel').textContent = vaFormatTime(end, true);
+
+            const isTrimmed = start > 0.1 || (vaVideoDuration > 0 && end < vaVideoDuration - 0.2);
+            const badge = document.getElementById('vaTrimBadge');
+            badge.textContent = isTrimmed ? `Trimmed (${vaFormatTime(end - start, true)})` : 'Full Clip';
+            vaUpdateSummary();
+        }
+
+        vaStartSlider.addEventListener('input', () => vaSyncTrim('start'));
+        vaEndSlider.addEventListener('input', () => vaSyncTrim('end'));
+        vaStartInput.addEventListener('change', () => vaSyncTrim('input'));
+        vaEndInput.addEventListener('change', () => vaSyncTrim('input'));
+
+        function vaSetTrimFromCurrent(bound) {
+            if (!vaVideoPreview || !vaVideoDuration) return;
+            const cur = parseFloat(vaVideoPreview.currentTime.toFixed(1));
+            if (bound === 'start') {
+                vaStartSlider.value = cur;
+                vaSyncTrim('start');
+            } else {
+                vaEndSlider.value = cur;
+                vaSyncTrim('end');
+            }
+        }
+
+        function vaSelectFormat(fmt) {
+            vaSelectedFormat = fmt;
+            const mp3Btn = document.getElementById('vaFormatMp3Btn');
+            const wavBtn = document.getElementById('vaFormatWavBtn');
+            const mp3Check = document.getElementById('vaMp3Check');
+            const wavCheck = document.getElementById('vaWavCheck');
+            const brContainer = document.getElementById('vaBitrateContainer');
+
+            if (fmt === 'mp3') {
+                mp3Btn.className = 'p-3.5 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-left transition-all';
+                wavBtn.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900 text-left transition-all';
+                mp3Check.classList.remove('hidden');
+                wavCheck.classList.add('hidden');
+                brContainer.classList.remove('opacity-40', 'pointer-events-none');
+            } else {
+                wavBtn.className = 'p-3.5 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-left transition-all';
+                mp3Btn.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900 text-left transition-all';
+                wavCheck.classList.remove('hidden');
+                mp3Check.classList.add('hidden');
+                brContainer.classList.add('opacity-40', 'pointer-events-none');
+            }
+            vaUpdateSummary();
+        }
+
+        function vaSelectBitrate(kbps) {
+            vaSelectedBitrate = kbps;
+            document.querySelectorAll('.va-bitrate-btn').forEach(btn => {
+                const b = parseInt(btn.getAttribute('data-kbps'), 10);
+                btn.className = b === kbps
+                    ? 'va-bitrate-btn py-2.5 px-3 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-center transition-all'
+                    : 'va-bitrate-btn py-2.5 px-3 rounded-xl border border-slate-800 bg-slate-900 text-center transition-all';
+            });
+            vaUpdateSummary();
+        }
+
+        function vaSelectChannels(ch) {
+            vaSelectedChannels = ch;
+            document.getElementById('vaChStereoBtn').className = ch === 'stereo'
+                ? 'py-2.5 px-3 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-xs font-semibold text-white flex items-center justify-center gap-2'
+                : 'py-2.5 px-3 rounded-xl border border-slate-800 bg-slate-900 text-xs font-semibold text-slate-300 flex items-center justify-center gap-2';
+            document.getElementById('vaChMonoBtn').className = ch === 'mono'
+                ? 'py-2.5 px-3 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-xs font-semibold text-white flex items-center justify-center gap-2'
+                : 'py-2.5 px-3 rounded-xl border border-slate-800 bg-slate-900 text-xs font-semibold text-slate-300 flex items-center justify-center gap-2';
+            vaUpdateSummary();
+        }
+
+        function vaUpdateSummary() {
+            const start = parseFloat(vaStartSlider.value) || 0;
+            const end = parseFloat(vaEndSlider.value) || vaVideoDuration || 0;
+            const clipDur = Math.max(0, end - start);
+            document.getElementById('vaSummaryDuration').textContent = vaFormatTime(clipDur, true);
+
+            const ch = vaSelectedChannels === 'mono' ? 1 : 2;
+            const estBytes = vaSelectedFormat === 'mp3'
+                ? (vaSelectedBitrate * 1000 / 8) * clipDur
+                : 44100 * 2 * ch * clipDur;
+            document.getElementById('vaSummarySize').textContent = clipDur > 0 ? `~${formatBytes(estBytes)}` : 'Auto';
+        }
+
+        function vaUpdateProgress(pct, text) {
+            const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+            document.getElementById('vaProgressBar').style.width = `${clamped}%`;
+            document.getElementById('vaProgressPct').textContent = `${clamped}%`;
+            if (text) {
+                document.getElementById('vaProgressText').innerHTML = `<i class="ph ph-spinner animate-spin text-sm"></i> ${text}`;
+            }
+        }
+
+        async function vaStartConversion() {
+            if (!vaCurrentFile || vaIsConverting) return;
+            document.getElementById('vaAlertBox').classList.add('hidden');
+            vaIsConverting = true;
+            document.getElementById('vaConvertBtn').disabled = true;
+            document.getElementById('vaProgressContainer').classList.remove('hidden');
+            document.getElementById('vaResultSection').classList.add('hidden');
+
+            const t0 = performance.now();
 
             try {
-                if (vaObjectUrl) URL.revokeObjectURL(vaObjectUrl);
-                vaObjectUrl = URL.createObjectURL(vaSourceFile);
-                const videoEl = document.getElementById('vaVideoPreview');
-                videoEl.src = vaObjectUrl;
+                if (!vaCachedAudioBuffer || vaCachedFileRef !== vaCurrentFile) {
+                    vaUpdateProgress(12, 'Reading video file into memory...');
+                    const arrayBuffer = await vaCurrentFile.arrayBuffer();
+                    vaUpdateProgress(32, 'Decoding audio track via Web Audio API...');
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    const audioCtx = new AudioCtx();
+                    try {
+                        vaCachedAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                        vaCachedFileRef = vaCurrentFile;
+                    } finally {
+                        if (audioCtx.state !== 'closed') await audioCtx.close();
+                    }
+                }
 
-                const arrayBuf = await vaSourceFile.arrayBuffer();
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                vaDecodedBuffer = await audioCtx.decodeAudioData(arrayBuf);
-                await audioCtx.close();
+                if (!vaVideoDuration || vaVideoDuration <= 0) {
+                    vaVideoDuration = vaCachedAudioBuffer.duration;
+                    vaResetTrim();
+                }
 
-                const dur = Number(vaDecodedBuffer.duration.toFixed(1));
-                document.getElementById('vaFileName').textContent = vaSourceFile.name;
-                document.getElementById('vaFileSize').textContent = (vaSourceFile.size / (1024 * 1024)).toFixed(2) + ' MB';
-                document.getElementById('vaDuration').textContent = formatSec(dur);
-                document.getElementById('vaSampleRate').textContent = vaDecodedBuffer.sampleRate + ' Hz';
-                document.getElementById('vaSourceChannels').textContent = vaDecodedBuffer.numberOfChannels === 1 ? 'Mono (1ch)' : 'Stereo (2ch)';
+                vaUpdateProgress(52, 'Preparing PCM audio channels...');
+                await new Promise(r => setTimeout(r, 20));
 
-                const sRange = document.getElementById('vaTrimStartRange');
-                const eRange = document.getElementById('vaTrimEndRange');
-                const sNum = document.getElementById('vaTrimStartNum');
-                const eNum = document.getElementById('vaTrimEndNum');
+                const sampleRate = vaCachedAudioBuffer.sampleRate;
+                const startSec = Math.max(0, parseFloat(vaStartSlider.value) || 0);
+                const endSec = Math.min(vaCachedAudioBuffer.duration, parseFloat(vaEndSlider.value) || vaCachedAudioBuffer.duration);
 
-                sRange.max = eRange.max = sNum.max = eNum.max = dur;
-                sRange.value = sNum.value = 0;
-                eRange.value = eNum.value = dur;
+                const startSample = Math.floor(startSec * sampleRate);
+                const endSample = Math.min(vaCachedAudioBuffer.length, Math.floor(endSec * sampleRate));
+                const frameCount = Math.max(1, endSample - startSample);
 
-                status.classList.add('hidden');
-                document.getElementById('vaWorkspace').classList.remove('hidden');
-                document.getElementById('vaResultBox').classList.add('hidden');
-                document.getElementById('vidAudioBtn').disabled = false;
+                const sourceChannels = vaCachedAudioBuffer.numberOfChannels;
+                const targetChannels = (vaSelectedChannels === 'mono' || sourceChannels === 1) ? 1 : 2;
 
-                syncTrimControls();
+                const leftChannel = new Float32Array(frameCount);
+                const rightChannel = targetChannels === 2 ? new Float32Array(frameCount) : null;
+                const rawLeft = vaCachedAudioBuffer.getChannelData(0).subarray(startSample, endSample);
+
+                if (targetChannels === 1 && sourceChannels > 1) {
+                    const rawRight = vaCachedAudioBuffer.getChannelData(1).subarray(startSample, endSample);
+                    for (let i = 0; i < frameCount; i++) leftChannel[i] = (rawLeft[i] + rawRight[i]) * 0.5;
+                } else {
+                    leftChannel.set(rawLeft);
+                    if (targetChannels === 2) {
+                        const rawRight = sourceChannels > 1 ? vaCachedAudioBuffer.getChannelData(1).subarray(startSample, endSample) : rawLeft;
+                        rightChannel.set(rawRight);
+                    }
+                }
+
+                let outputBlob;
+                if (vaSelectedFormat === 'wav') {
+                    vaUpdateProgress(78, 'Packaging 16-bit PCM WAV...');
+                    await new Promise(r => setTimeout(r, 20));
+                    outputBlob = vaEncodeWAV(leftChannel, rightChannel, sampleRate, targetChannels);
+                    vaUpdateProgress(100, 'Complete!');
+                } else {
+                    outputBlob = await vaEncodeMP3(leftChannel, rightChannel, sampleRate, targetChannels, vaSelectedBitrate);
+                }
+
+                const elapsed = ((performance.now() - t0) / 1000).toFixed(2);
+                vaDisplayResult(outputBlob, leftChannel, sampleRate, targetChannels, elapsed);
             } catch (err) {
-                updateStatus('vidAudio', 'error', 'Could not decode audio track from this file.');
+                console.error(err);
+                vaShowAlert('Could Not Decode Audio Stream', 'Your browser could not decode an audio track from this file. Please verify the video contains audio and uses a standard container (MP4, WebM, MOV, OGG).');
+            } finally {
+                vaIsConverting = false;
+                document.getElementById('vaConvertBtn').disabled = false;
+                setTimeout(() => document.getElementById('vaProgressContainer').classList.add('hidden'), 500);
             }
-        });
-
-        function syncTrimControls(source) {
-            if (!vaDecodedBuffer) return;
-            const dur = Number(vaDecodedBuffer.duration.toFixed(1));
-            const sRange = document.getElementById('vaTrimStartRange');
-            const eRange = document.getElementById('vaTrimEndRange');
-            const sNum = document.getElementById('vaTrimStartNum');
-            const eNum = document.getElementById('vaTrimEndNum');
-
-            let start = parseFloat(source === 'num' ? sNum.value : sRange.value) || 0;
-            let end = parseFloat(source === 'num' ? eNum.value : eRange.value) || dur;
-
-            start = Math.max(0, Math.min(start, dur - 0.1));
-            end = Math.max(start + 0.1, Math.min(end, dur));
-
-            sRange.value = sNum.value = start.toFixed(1);
-            eRange.value = eNum.value = end.toFixed(1);
-
-            document.getElementById('vaTrimDurationBadge').textContent = `Selected: ${(end - start).toFixed(1)}s`;
-            drawWaveform(start, end);
         }
 
-        ['vaTrimStartRange', 'vaTrimEndRange'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => syncTrimControls('range'));
-        });
-        ['vaTrimStartNum', 'vaTrimEndNum'].forEach(id => {
-            document.getElementById(id).addEventListener('change', () => syncTrimControls('num'));
-        });
+        function vaEncodeWAV(left, right, sampleRate, numChannels) {
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const dataByteLength = left.length * blockAlign;
+            const buffer = new ArrayBuffer(44 + dataByteLength);
+            const view = new DataView(buffer);
 
-        function setTrimFromVideo(bound) {
-            const videoEl = document.getElementById('vaVideoPreview');
-            if (!vaDecodedBuffer) return;
-            const cur = Number(videoEl.currentTime.toFixed(1));
-            if (bound === 'start') {
-                document.getElementById('vaTrimStartRange').value = cur;
+            const writeAscii = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+            writeAscii(0, 'RIFF');
+            view.setUint32(4, 36 + dataByteLength, true);
+            writeAscii(8, 'WAVE');
+            writeAscii(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            writeAscii(36, 'data');
+            view.setUint32(40, dataByteLength, true);
+
+            let offset = 44;
+            if (numChannels === 2 && right) {
+                for (let i = 0; i < left.length; i++) {
+                    const sL = Math.max(-1, Math.min(1, left[i]));
+                    const sR = Math.max(-1, Math.min(1, right[i]));
+                    view.setInt16(offset, sL < 0 ? sL * 0x8000 : sL * 0x7FFF, true);
+                    view.setInt16(offset + 2, sR < 0 ? sR * 0x8000 : sR * 0x7FFF, true);
+                    offset += 4;
+                }
             } else {
-                document.getElementById('vaTrimEndRange').value = cur;
+                for (let i = 0; i < left.length; i++) {
+                    const s = Math.max(-1, Math.min(1, left[i]));
+                    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                    offset += 2;
+                }
             }
-            syncTrimControls('range');
+            return new Blob([buffer], { type: 'audio/wav' });
         }
 
-        function drawWaveform(startSec, endSec) {
+        async function vaEncodeMP3(leftFloat, rightFloat, sampleRate, numChannels, kbps) {
+            const toInt16 = arr => {
+                const out = new Int16Array(arr.length);
+                for (let i = 0; i < arr.length; i++) {
+                    const s = Math.max(-1, Math.min(1, arr[i]));
+                    out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                }
+                return out;
+            };
+            const leftPCM = toInt16(leftFloat);
+            const rightPCM = (numChannels === 2 && rightFloat) ? toInt16(rightFloat) : null;
+
+            const encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, kbps);
+            const chunks = [];
+            const blockSize = 1152;
+            let blocks = 0;
+
+            for (let i = 0; i < leftPCM.length; i += blockSize) {
+                const lChunk = leftPCM.subarray(i, i + blockSize);
+                const buf = (numChannels === 2 && rightPCM)
+                    ? encoder.encodeBuffer(lChunk, rightPCM.subarray(i, i + blockSize))
+                    : encoder.encodeBuffer(lChunk);
+                if (buf.length > 0) chunks.push(new Int8Array(buf));
+
+                blocks++;
+                if (blocks % 65 === 0) {
+                    vaUpdateProgress(55 + Math.round((i / leftPCM.length) * 42), `Encoding MP3 (${kbps} kbps)...`);
+                    await new Promise(r => setTimeout(r, 0));
+                }
+            }
+            const endBuf = encoder.flush();
+            if (endBuf.length > 0) chunks.push(new Int8Array(endBuf));
+            vaUpdateProgress(100, 'MP3 Encoding Complete!');
+            return new Blob(chunks, { type: 'audio/mpeg' });
+        }
+
+        function vaDisplayResult(blob, channelData, sampleRate, numChannels, elapsedSec) {
+            if (vaCurrentOutUrl) URL.revokeObjectURL(vaCurrentOutUrl);
+            vaCurrentOutUrl = URL.createObjectURL(blob);
+
+            const baseName = vaCurrentFile.name.replace(/\.[^/.]+$/, '') || 'extracted-audio';
+            const ext = vaSelectedFormat === 'mp3' ? 'mp3' : 'wav';
+            const outName = `${baseName}.${ext}`;
+
+            document.getElementById('vaAudioPreview').src = vaCurrentOutUrl;
+            const dlBtn = document.getElementById('vaDownloadBtn');
+            dlBtn.href = vaCurrentOutUrl;
+            dlBtn.download = outName;
+
+            document.getElementById('vaOutBadge').textContent = vaSelectedFormat.toUpperCase();
+            const chStr = numChannels === 2 ? 'Stereo' : 'Mono';
+            const rateStr = `${(sampleRate / 1000).toFixed(1)} kHz`;
+            const brStr = vaSelectedFormat === 'mp3' ? ` • ${vaSelectedBitrate} kbps` : ' • 16-bit PCM';
+            document.getElementById('vaOutDetails').textContent = `${outName} • ${formatBytes(blob.size)} • ${chStr} • ${rateStr}${brStr}`;
+            document.getElementById('vaTimeInfo').textContent = `Processed locally in ${elapsedSec}s`;
+
+            const resSec = document.getElementById('vaResultSection');
+            resSec.classList.remove('hidden');
+            resSec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            requestAnimationFrame(() => vaDrawWaveform(channelData));
+        }
+
+        function vaDrawWaveform(samples) {
             const canvas = document.getElementById('vaWaveformCanvas');
-            if (!canvas || !vaDecodedBuffer) return;
             const dpr = window.devicePixelRatio || 1;
-            const width = canvas.clientWidth || 600;
-            const height = canvas.clientHeight || 96;
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width || 600;
+            const height = rect.height || 64;
             canvas.width = width * dpr;
             canvas.height = height * dpr;
 
@@ -749,207 +1719,36 @@
             ctx.scale(dpr, dpr);
             ctx.clearRect(0, 0, width, height);
 
-            const data = vaDecodedBuffer.getChannelData(0);
-            const step = Math.ceil(data.length / width);
-            const amp = height / 2;
-            const dur = vaDecodedBuffer.duration;
-            const startX = (startSec / dur) * width;
-            const endX = (endSec / dur) * width;
+            const barWidth = 3;
+            const gap = 2;
+            const totalBars = Math.floor(width / (barWidth + gap));
+            const step = Math.max(1, Math.floor(samples.length / totalBars));
+            const midY = height / 2;
 
-            // Highlight active trim zone
-            ctx.fillStyle = 'rgba(79, 70, 229, 0.08)';
-            ctx.fillRect(startX, 0, Math.max(2, endX - startX), height);
+            const grad = ctx.createLinearGradient(0, 0, width, 0);
+            grad.addColorStop(0, '#10b981');
+            grad.addColorStop(0.5, '#6366f1');
+            grad.addColorStop(1, '#a855f7');
+            ctx.fillStyle = grad;
 
-            for (let i = 0; i < width; i++) {
-                let min = 1.0, max = -1.0;
-                for (let j = 0; j < step; j++) {
-                    const datum = data[(i * step) + j];
-                    if (datum < min) min = datum;
-                    if (datum > max) max = datum;
+            for (let i = 0; i < totalBars; i++) {
+                let sum = 0, count = 0;
+                const startIdx = i * step;
+                const subStep = Math.max(1, Math.floor(step / 16));
+                for (let j = 0; j < step && (startIdx + j) < samples.length; j += subStep) {
+                    sum += Math.abs(samples[startIdx + j]);
+                    count++;
                 }
-                const inRange = i >= startX && i <= endX;
-                ctx.fillStyle = inRange ? '#4F46E5' : '#D1D5DB';
-                const y = (1 + min) * amp;
-                const h = Math.max(1.5, (max - min) * amp);
-                ctx.fillRect(i, y, 1, h);
+                const avg = count > 0 ? sum / count : 0;
+                const barH = Math.max(3, Math.min(height - 6, avg * height * 2.2));
+                ctx.beginPath();
+                ctx.roundRect(i * (barWidth + gap), midY - barH / 2, barWidth, barH, 1.5);
+                ctx.fill();
             }
-        }
-
-        function encodeWAV(audioBuffer, startOffset, endOffset, forceMono) {
-            const sampleRate = audioBuffer.sampleRate;
-            const startFrame = Math.floor(startOffset * sampleRate);
-            const endFrame = Math.floor(endOffset * sampleRate);
-            const frameCount = Math.max(1, endFrame - startFrame);
-            const numChannels = forceMono ? 1 : Math.min(2, audioBuffer.numberOfChannels);
-
-            const buffer = new ArrayBuffer(44 + frameCount * numChannels * 2);
-            const view = new DataView(buffer);
-
-            const writeStr = (offset, str) => {
-                for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-            };
-
-            writeStr(0, 'RIFF');
-            view.setUint32(4, 36 + frameCount * numChannels * 2, true);
-            writeStr(8, 'WAVE');
-            writeStr(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * numChannels * 2, true);
-            view.setUint16(32, numChannels * 2, true);
-            view.setUint16(34, 16, true);
-            writeStr(36, 'data');
-            view.setUint32(40, frameCount * numChannels * 2, true);
-
-            const ch0 = audioBuffer.getChannelData(0).subarray(startFrame, endFrame);
-            const ch1 = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1).subarray(startFrame, endFrame) : ch0;
-
-            let offset = 44;
-            for (let i = 0; i < frameCount; i++) {
-                if (numChannels === 1) {
-                    const monoSample = audioBuffer.numberOfChannels > 1 ? (ch0[i] + ch1[i]) * 0.5 : ch0[i];
-                    const s = Math.max(-1, Math.min(1, monoSample));
-                    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-                    offset += 2;
-                } else {
-                    const sL = Math.max(-1, Math.min(1, ch0[i]));
-                    const sR = Math.max(-1, Math.min(1, ch1[i]));
-                    view.setInt16(offset, sL < 0 ? sL * 0x8000 : sL * 0x7FFF, true);
-                    view.setInt16(offset + 2, sR < 0 ? sR * 0x8000 : sR * 0x7FFF, true);
-                    offset += 4;
-                }
-            }
-            return new Blob([buffer], { type: 'audio/wav' });
-        }
-
-        async function encodeMP3(audioBuffer, startOffset, endOffset, forceMono, kbps, onProgress) {
-            const sampleRate = audioBuffer.sampleRate;
-            const startFrame = Math.floor(startOffset * sampleRate);
-            const endFrame = Math.floor(endOffset * sampleRate);
-            const frameCount = Math.max(1, endFrame - startFrame);
-            const numChannels = forceMono ? 1 : Math.min(2, audioBuffer.numberOfChannels);
-
-            const ch0 = audioBuffer.getChannelData(0).subarray(startFrame, endFrame);
-            const ch1 = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1).subarray(startFrame, endFrame) : ch0;
-
-            const leftPCM = new Int16Array(frameCount);
-            const rightPCM = numChannels === 2 ? new Int16Array(frameCount) : null;
-
-            for (let i = 0; i < frameCount; i++) {
-                if (numChannels === 1) {
-                    const m = audioBuffer.numberOfChannels > 1 ? (ch0[i] + ch1[i]) * 0.5 : ch0[i];
-                    const s = Math.max(-1, Math.min(1, m));
-                    leftPCM[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                } else {
-                    const sL = Math.max(-1, Math.min(1, ch0[i]));
-                    const sR = Math.max(-1, Math.min(1, ch1[i]));
-                    leftPCM[i] = sL < 0 ? sL * 0x8000 : sL * 0x7FFF;
-                    rightPCM[i] = sR < 0 ? sR * 0x8000 : sR * 0x7FFF;
-                }
-            }
-
-            const mp3encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, kbps);
-            const mp3Data = [];
-            const blockSize = 1152;
-            const totalBlocks = Math.ceil(frameCount / blockSize);
-
-            for (let i = 0; i < frameCount; i += blockSize) {
-                const leftChunk = leftPCM.subarray(i, i + blockSize);
-                let mp3buf;
-                if (numChannels === 2) {
-                    const rightChunk = rightPCM.subarray(i, i + blockSize);
-                    mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
-                } else {
-                    mp3buf = mp3encoder.encodeBuffer(leftChunk);
-                }
-                if (mp3buf.length > 0) mp3Data.push(mp3buf);
-
-                const currentBlock = Math.floor(i / blockSize);
-                if (currentBlock % 35 === 0) {
-                    onProgress(Math.min(99, Math.round((currentBlock / totalBlocks) * 100)));
-                    await new Promise(r => setTimeout(r, 0));
-                }
-            }
-
-            const flushBuf = mp3encoder.flush();
-            if (flushBuf.length > 0) mp3Data.push(flushBuf);
-            onProgress(100);
-
-            return new Blob(mp3Data, { type: 'audio/mpeg' });
-        }
-
-        document.getElementById('vidAudioBtn').addEventListener('click', async () => {
-            if (!vaDecodedBuffer || !vaSourceFile) return;
-
-            const format = document.getElementById('vaFormat').value;
-            const bitrate = parseInt(document.getElementById('vaBitrate').value, 10);
-            const forceMono = document.getElementById('vaChannels').value === 'mono';
-            const startSec = parseFloat(document.getElementById('vaTrimStartNum').value) || 0;
-            const endSec = parseFloat(document.getElementById('vaTrimEndNum').value) || vaDecodedBuffer.duration;
-
-            const progressWrap = document.getElementById('vaProgressWrap');
-            const progressBar = document.getElementById('vaProgressBar');
-            const progressPct = document.getElementById('vaProgressPct');
-            const btn = document.getElementById('vidAudioBtn');
-
-            btn.disabled = true;
-            progressWrap.classList.remove('hidden');
-            progressBar.style.width = '5%';
-            progressPct.textContent = '5%';
-
-            try {
-                let outBlob;
-                if (format === 'wav') {
-                    outBlob = encodeWAV(vaDecodedBuffer, startSec, endSec, forceMono);
-                    progressBar.style.width = '100%';
-                    progressPct.textContent = '100%';
-                } else {
-                    outBlob = await encodeMP3(vaDecodedBuffer, startSec, endSec, forceMono, bitrate, (pct) => {
-                        progressBar.style.width = `${pct}%`;
-                        progressPct.textContent = `${pct}%`;
-                    });
-                }
-
-                const outName = getFileName(vaSourceFile, `audio.${format}`);
-                const audioUrl = URL.createObjectURL(outBlob);
-
-                const resAudio = document.getElementById('vaResultAudio');
-                resAudio.src = audioUrl;
-
-                const dlLink = document.getElementById('vaDownloadLink');
-                dlLink.href = audioUrl;
-                dlLink.download = outName;
-
-                document.getElementById('vaResultTitle').textContent = `✅ Ready: ${outName} (${(outBlob.size / 1024 / 1024).toFixed(2)} MB)`;
-                document.getElementById('vaResultBox').classList.remove('hidden');
-                document.getElementById('vidAudioResetBtn').classList.remove('hidden');
-
-                triggerDownload(outBlob, outName);
-            } catch (e) {
-                updateStatus('vidAudio', 'error', e.message);
-            } finally {
-                btn.disabled = false;
-                setTimeout(() => progressWrap.classList.add('hidden'), 600);
-            }
-        });
-
-        function resetVideoAudio() {
-            document.getElementById('vaFileInput').value = '';
-            document.getElementById('vaWorkspace').classList.add('hidden');
-            document.getElementById('vaResultBox').classList.add('hidden');
-            document.getElementById('vidAudioResetBtn').classList.add('hidden');
-            document.getElementById('vidAudioStatus').classList.add('hidden');
-            document.getElementById('vidAudioBtn').disabled = true;
-            document.getElementById('vaVideoPreview').src = '';
-            document.getElementById('vaResultAudio').src = '';
-            vaDecodedBuffer = null;
-            vaSourceFile = null;
         }
 
         // ==========================================
-        // QPDF WEBASSEMBLY LOADER
+        // 4. QPDF WEBASSEMBLY & PDF.JS SETUP
         // ==========================================
         async function getQPDF() {
             return new Promise((resolve, reject) => {
@@ -958,8 +1757,8 @@
                 script.src = "https://unpkg.com/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js";
                 script.onload = async () => {
                     try {
-                        const factory = window.Module; 
-                        if (!factory) throw new Error("WASM factory missing.");
+                        const factory = window.Module;
+                        if (!factory) throw new Error("WASM factory unavailable.");
                         window.qpdfEngine = await factory({
                             locateFile: () => "https://unpkg.com/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm",
                             noInitialRun: true
@@ -967,40 +1766,73 @@
                         resolve(window.qpdfEngine);
                     } catch (err) { reject(new Error(err.message)); }
                 };
-                script.onerror = () => reject(new Error("Network error loading encryption engine"));
+                script.onerror = () => reject(new Error("Could not load QPDF WebAssembly module."));
                 document.head.appendChild(script);
             });
         }
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        const signaturePad = new SignaturePad(document.getElementById('sigCanvas'), { penColor: "rgb(17, 24, 39)", backgroundColor: "rgba(255, 255, 255, 0)" });
+
+        // High-DPI Responsive SignaturePad
+        const sigCanvas = document.getElementById('sigCanvas');
+        const signaturePad = new SignaturePad(sigCanvas, {
+            penColor: "rgb(17, 24, 39)",
+            backgroundColor: "rgba(255, 255, 255, 0)"
+        });
+
+        function resizeSignatureCanvas() {
+            if (!sigCanvas.offsetWidth) return;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            sigCanvas.width = sigCanvas.offsetWidth * ratio;
+            sigCanvas.height = sigCanvas.offsetHeight * ratio;
+            sigCanvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear();
+        }
+
+        function setSigColor(color) {
+            signaturePad.penColor = color;
+        }
 
         // ==========================================
-        // PDF TOOL LOGIC
+        // 5. OPTIMIZED PDF TOOLS LOGIC
         // ==========================================
 
-        // --- 1. MERGE ---
-        new Sortable(document.getElementById('mergeFileList'), { animation: 150 });
-        document.getElementById('mergeFileInput').addEventListener('change', (e) => {
+        // --- 1. MERGE PDF (Supports appending & removing items) ---
+        const mergeListEl = document.getElementById('mergeFileList');
+        new Sortable(mergeListEl, { animation: 150 });
+
+        function updateMergeHeader() {
+            const count = mergeListEl.children.length;
+            document.getElementById('mergeListHeader').classList.toggle('hidden', count === 0);
+            document.getElementById('mergeCountLabel').textContent = `${count} PDF file${count === 1 ? '' : 's'} ready (Drag to reorder)`;
+            document.getElementById('mergeBtn').disabled = count < 2;
+        }
+
+        document.getElementById('mergeFileInput').addEventListener('change', e => {
             if (!e.target.files.length) return;
-            const list = document.getElementById('mergeFileList');
-            Array.from(e.target.files).filter(f => f.type === 'application/pdf').forEach(f => {
+            Array.from(e.target.files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf')).forEach(f => {
                 const li = document.createElement('li');
-                li.className = "bg-gray-50 p-3 rounded-xl border border-gray-200 flex justify-between items-center";
+                li.className = "bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex justify-between items-center gap-3";
                 li.innerHTML = `
-                    <span class="truncate pr-4"><span class="text-gray-400 mr-2">☰</span>${f.name}</span>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs text-gray-400 whitespace-nowrap">${(f.size/1024/1024).toFixed(2)} MB</span>
-                        <button type="button" class="text-gray-400 hover:text-red-500 font-bold" onclick="this.closest('li').remove(); if(!document.getElementById('mergeFileList').children.length) resetTool('merge');">✕</button>
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <i class="ph-bold ph-dots-six-vertical text-slate-500"></i>
+                        <i class="ph-fill ph-file-pdf text-rose-500 text-lg shrink-0"></i>
+                        <span class="truncate font-medium text-xs sm:text-sm text-slate-200">${f.name}</span>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span class="text-xs font-mono text-slate-400">${formatBytes(f.size)}</span>
+                        <button type="button" class="text-slate-400 hover:text-rose-500 p-1" onclick="this.closest('li').remove(); updateMergeHeader();"><i class="ph-bold ph-trash"></i></button>
                     </div>`;
                 li.fileData = f;
-                list.appendChild(li);
+                mergeListEl.appendChild(li);
             });
-            if (list.children.length) enableTool('merge');
+            updateMergeHeader();
         });
+
         document.getElementById('mergeBtn').addEventListener('click', async () => {
-            const files = Array.from(document.getElementById('mergeFileList').children).map(li => li.fileData);
-            updateStatus('merge', 'processing', 'Merging documents...');
+            const files = Array.from(mergeListEl.children).map(li => li.fileData);
+            if (files.length < 2) return;
+            updateStatus('merge', 'processing', 'Merging PDF documents...');
             try {
                 const doc = await PDFLib.PDFDocument.create();
                 for (let f of files) {
@@ -1011,253 +1843,386 @@
                 const filename = getFileName(files[0], 'merged.pdf');
                 triggerDownload(await doc.save(), filename);
                 updateStatus('merge', 'success', '', filename);
-            } catch(e) { updateStatus('merge', 'error', e.message); }
+            } catch (e) { updateStatus('merge', 'error', e.message); }
         });
 
-        // --- 2. SPLIT ---
-        let splitFile;
-        document.getElementById('splitFileInput').addEventListener('change', async (e) => {
+        // --- 2. SPLIT PDF (Supports Range or Custom Comma-Separated Pages) ---
+        let splitFile, splitTotalPages = 1;
+        document.getElementById('splitFileInput').addEventListener('change', async e => {
             if (!e.target.files.length) return;
             splitFile = e.target.files[0];
-            const pdf = await PDFLib.PDFDocument.load(await splitFile.arrayBuffer());
-            const max = pdf.getPageCount();
-            document.getElementById('splitPageCountBadge').textContent = `${max} pages`;
-            document.getElementById('splitStartPage').max = max;
-            document.getElementById('splitStartPage').value = 1;
-            document.getElementById('splitEndPage').max = max;
-            document.getElementById('splitEndPage').value = max;
-            enableTool('split');
+            try {
+                const pdf = await PDFLib.PDFDocument.load(await splitFile.arrayBuffer());
+                splitTotalPages = pdf.getPageCount();
+                document.getElementById('splitFileLabel').textContent = splitFile.name;
+                document.getElementById('splitPageBadge').textContent = `${splitTotalPages} total pages • ${formatBytes(splitFile.size)}`;
+                document.getElementById('splitStartPage').max = splitTotalPages;
+                document.getElementById('splitStartPage').value = 1;
+                document.getElementById('splitEndPage').max = splitTotalPages;
+                document.getElementById('splitEndPage').value = splitTotalPages;
+                enableTool('split');
+            } catch (err) {
+                updateStatus('split', 'error', 'Unable to read PDF. Is it password-protected?');
+            }
         });
+
         document.getElementById('splitBtn').addEventListener('click', async () => {
-            updateStatus('split', 'processing', 'Extracting pages...');
+            updateStatus('split', 'processing', 'Extracting selected pages...');
             try {
                 const orig = await PDFLib.PDFDocument.load(await splitFile.arrayBuffer());
-                const max = orig.getPageCount();
-                const start = Math.max(1, parseInt(document.getElementById('splitStartPage').value) || 1);
-                const end = Math.min(max, parseInt(document.getElementById('splitEndPage').value) || max);
-                if (start > end) throw new Error("Start page cannot be greater than end page.");
+                const maxP = orig.getPageCount();
+                const customStr = document.getElementById('splitCustomRange').value.trim();
+                let indices = [];
 
+                if (customStr) {
+                    customStr.split(',').forEach(part => {
+                        const p = part.trim();
+                        if (p.includes('-')) {
+                            const [a, b] = p.split('-').map(n => parseInt(n.trim(), 10));
+                            if (a && b && a <= b) {
+                                for (let k = Math.max(1, a); k <= Math.min(maxP, b); k++) indices.push(k - 1);
+                            }
+                        } else {
+                            const n = parseInt(p, 10);
+                            if (n >= 1 && n <= maxP) indices.push(n - 1);
+                        }
+                    });
+                } else {
+                    const s = Math.max(1, parseInt(document.getElementById('splitStartPage').value, 10) || 1);
+                    const e = Math.min(maxP, parseInt(document.getElementById('splitEndPage').value, 10) || maxP);
+                    if (s > e) throw new Error('Start page cannot exceed End page.');
+                    for (let k = s; k <= e; k++) indices.push(k - 1);
+                }
+
+                if (!indices.length) throw new Error('No valid page numbers specified.');
                 const newDoc = await PDFLib.PDFDocument.create();
-                const pages = await newDoc.copyPages(orig, Array.from({length: end - start + 1}, (_, i) => start - 1 + i));
-                pages.forEach(p => newDoc.addPage(p));
-                const filename = getFileName(splitFile, `p${start}-${end}.pdf`);
+                const copied = await newDoc.copyPages(orig, indices);
+                copied.forEach(p => newDoc.addPage(p));
+                const filename = getFileName(splitFile, `extracted.pdf`);
                 triggerDownload(await newDoc.save(), filename);
                 updateStatus('split', 'success', '', filename);
-            } catch(e) { updateStatus('split', 'error', e.message); }
+            } catch (e) { updateStatus('split', 'error', e.message); }
         });
 
-        // --- 3. IMG TO PDF ---
-        new Sortable(document.getElementById('imgFileList'), { animation: 150 });
-        document.getElementById('imgFileInput').addEventListener('change', (e) => {
+        // --- 3. IMAGES TO PDF (Supports JPG/PNG/WebP + Page Layout) ---
+        const imgListEl = document.getElementById('imgFileList');
+        new Sortable(imgListEl, { animation: 150 });
+
+        function updateImgHeader() {
+            const count = imgListEl.children.length;
+            document.getElementById('imgCountLabel').textContent = `${count} image${count === 1 ? '' : 's'} queued`;
+            document.getElementById('imgBtn').disabled = count === 0;
+        }
+
+        document.getElementById('imgFileInput').addEventListener('change', e => {
             if (!e.target.files.length) return;
-            const list = document.getElementById('imgFileList');
             Array.from(e.target.files).filter(f => f.type.startsWith('image/')).forEach(f => {
                 const li = document.createElement('li');
-                li.className = "bg-gray-50 p-3 rounded-xl border border-gray-200 flex justify-between items-center";
+                li.className = "bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex justify-between items-center gap-3";
                 li.innerHTML = `
-                    <span class="truncate pr-4"><span class="text-gray-400 mr-2">☰</span>${f.name}</span>
-                    <button type="button" class="text-gray-400 hover:text-red-500 font-bold" onclick="this.closest('li').remove(); if(!document.getElementById('imgFileList').children.length) resetTool('img');">✕</button>`;
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <i class="ph-bold ph-dots-six-vertical text-slate-500"></i>
+                        <i class="ph-fill ph-image text-pink-500 text-lg shrink-0"></i>
+                        <span class="truncate font-medium text-xs sm:text-sm text-slate-200">${f.name}</span>
+                    </div>
+                    <button type="button" class="text-slate-400 hover:text-rose-500 p-1" onclick="this.closest('li').remove(); updateImgHeader();"><i class="ph-bold ph-trash"></i></button>`;
                 li.fileData = f;
-                list.appendChild(li);
+                imgListEl.appendChild(li);
             });
-            if (list.children.length) enableTool('img');
-        });
-        document.getElementById('imgBtn').addEventListener('click', async () => {
-            const files = Array.from(document.getElementById('imgFileList').children).map(li => li.fileData);
-            updateStatus('img', 'processing', 'Building PDF from images...');
-            try {
-                const doc = await PDFLib.PDFDocument.create();
-                for (let f of files) {
-                    const bytes = await f.arrayBuffer();
-                    const img = f.type === 'image/jpeg' ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
-                    const dims = img.scale(1);
-                    const page = doc.addPage([dims.width, dims.height]);
-                    page.drawImage(img, {x: 0, y: 0, width: dims.width, height: dims.height});
-                }
-                const filename = getFileName(files[0], 'converted.pdf');
-                triggerDownload(await doc.save(), filename);
-                updateStatus('img', 'success', '', filename);
-            } catch(e) { updateStatus('img', 'error', e.message); }
+            enableTool('img');
+            updateImgHeader();
         });
 
-        // --- 4. WATERMARK ---
+        async function imageFileToBytes(file) {
+            if (file.type === 'image/jpeg' || file.type === 'image/png') {
+                return { bytes: await file.arrayBuffer(), isPng: file.type === 'image/png' };
+            }
+            // Convert WebP or other formats via Canvas to PNG
+            const bmp = await createImageBitmap(file);
+            const canvas = document.createElement('canvas');
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            canvas.getContext('2d').drawImage(bmp, 0, 0);
+            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+            return { bytes: await blob.arrayBuffer(), isPng: true };
+        }
+
+        document.getElementById('imgBtn').addEventListener('click', async () => {
+            const files = Array.from(imgListEl.children).map(li => li.fileData);
+            if (!files.length) return;
+            updateStatus('img', 'processing', 'Embedding images into PDF...');
+            try {
+                const doc = await PDFLib.PDFDocument.create();
+                const layout = document.getElementById('imgPageSize').value;
+
+                for (let f of files) {
+                    const { bytes, isPng } = await imageFileToBytes(f);
+                    const img = isPng ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+                    const dims = img.scale(1);
+
+                    if (layout === 'fit') {
+                        const page = doc.addPage([dims.width, dims.height]);
+                        page.drawImage(img, { x: 0, y: 0, width: dims.width, height: dims.height });
+                    } else {
+                        const pW = layout === 'a4-p' ? 595.28 : 841.89;
+                        const pH = layout === 'a4-p' ? 841.89 : 595.28;
+                        const margin = 36;
+                        const scale = Math.min((pW - margin * 2) / dims.width, (pH - margin * 2) / dims.height);
+                        const w = dims.width * scale;
+                        const h = dims.height * scale;
+                        const page = doc.addPage([pW, pH]);
+                        page.drawImage(img, { x: (pW - w) / 2, y: (pH - h) / 2, width: w, height: h });
+                    }
+                }
+                const filename = getFileName(files[0], 'images.pdf');
+                triggerDownload(await doc.save(), filename);
+                updateStatus('img', 'success', '', filename);
+            } catch (e) { updateStatus('img', 'error', e.message); }
+        });
+
+        // --- 4. WATERMARK PDF ---
         let wmFile;
-        document.getElementById('wmFileInput').addEventListener('change', (e) => { if (e.target.files.length) { wmFile = e.target.files[0]; enableTool('wm'); }});
+        document.getElementById('wmFileInput').addEventListener('change', e => {
+            if (e.target.files.length) {
+                wmFile = e.target.files[0];
+                document.getElementById('wmFileLabel').textContent = `${wmFile.name} (${formatBytes(wmFile.size)})`;
+                enableTool('wm');
+            }
+        });
         document.getElementById('wmBtn').addEventListener('click', async () => {
-            updateStatus('wm', 'processing', 'Stamping watermark...');
+            updateStatus('wm', 'processing', 'Stamping watermark across pages...');
             try {
                 const doc = await PDFLib.PDFDocument.load(await wmFile.arrayBuffer());
                 const text = document.getElementById('wmTextInput').value || 'CONFIDENTIAL';
-                const opacity = parseFloat(document.getElementById('wmOpacity').value) || 0.15;
-                const size = parseInt(document.getElementById('wmSize').value) || 50;
+                const size = parseInt(document.getElementById('wmSizeInput').value, 10) || 48;
+                const opacity = (parseInt(document.getElementById('wmOpacityInput').value, 10) || 18) / 100;
+                const colKey = document.getElementById('wmColorInput').value;
+                const color = colKey === 'red' ? PDFLib.rgb(0.8, 0.1, 0.1) : colKey === 'blue' ? PDFLib.rgb(0.1, 0.25, 0.8) : PDFLib.rgb(0.2, 0.2, 0.2);
 
                 doc.getPages().forEach(page => {
                     const { width, height } = page.getSize();
-                    page.drawText(text, { x: width/2 - (text.length * size * 0.25), y: height/2, size, opacity, rotate: PDFLib.degrees(45), color: PDFLib.rgb(0,0,0) });
+                    page.drawText(text, {
+                        x: width / 2 - (text.length * size * 0.22),
+                        y: height / 2,
+                        size,
+                        opacity,
+                        rotate: PDFLib.degrees(42),
+                        color
+                    });
                 });
                 const filename = getFileName(wmFile, 'watermarked.pdf');
                 triggerDownload(await doc.save(), filename);
                 updateStatus('wm', 'success', '', filename);
-            } catch(e) { updateStatus('wm', 'error', e.message); }
+            } catch (e) { updateStatus('wm', 'error', e.message); }
         });
 
-        // --- 5. NUMBERING ---
+        // --- 5. PAGE NUMBERS ---
         let numFile;
-        document.getElementById('numFileInput').addEventListener('change', (e) => { if (e.target.files.length) { numFile = e.target.files[0]; enableTool('num'); }});
+        document.getElementById('numFileInput').addEventListener('change', e => {
+            if (e.target.files.length) {
+                numFile = e.target.files[0];
+                document.getElementById('numFileLabel').textContent = `${numFile.name} (${formatBytes(numFile.size)})`;
+                enableTool('num');
+            }
+        });
         document.getElementById('numBtn').addEventListener('click', async () => {
-            updateStatus('num', 'processing', 'Adding page numbers...');
+            updateStatus('num', 'processing', 'Numbering pages...');
             try {
                 const doc = await PDFLib.PDFDocument.load(await numFile.arrayBuffer());
                 const vPos = document.getElementById('numVPos').value;
                 const hPos = document.getElementById('numHPos').value;
                 const fmt = document.getElementById('numFormat').value;
                 const fontSize = 11;
-                const total = doc.getPageCount();
+                const pages = doc.getPages();
+                const total = pages.length;
 
-                doc.getPages().forEach((page, idx) => {
-                    const text = fmt === 'ofTotal' ? `Page ${idx + 1} of ${total}` : (fmt === 'numOnly' ? `${idx + 1}` : `Page ${idx + 1}`);
+                pages.forEach((page, idx) => {
+                    const n = idx + 1;
+                    const text = fmt === 'page_n_of_t' ? `Page ${n} of ${total}`
+                               : fmt === 'page_n' ? `Page ${n}`
+                               : fmt === 'n_slash_t' ? `${n} / ${total}`
+                               : `${n}`;
                     const { width, height } = page.getSize();
-                    const textWidth = fontSize * 0.52 * text.length; 
-                    
-                    let x = 35;
-                    if (hPos === 'center') x = (width - textWidth) / 2;
-                    if (hPos === 'right') x = width - textWidth - 35;
-
-                    let y = 30;
-                    if (vPos === 'top') y = height - fontSize - 30;
-
+                    const textWidth = fontSize * 0.52 * text.length;
+                    const x = hPos === 'center' ? (width - textWidth) / 2 : hPos === 'right' ? width - textWidth - 36 : 36;
+                    const y = vPos === 'top' ? height - fontSize - 28 : 28;
                     page.drawText(text, { x, y, size: fontSize, color: PDFLib.rgb(0.25, 0.25, 0.25) });
                 });
-                
+
                 const filename = getFileName(numFile, 'numbered.pdf');
                 triggerDownload(await doc.save(), filename);
                 updateStatus('num', 'success', '', filename);
-            } catch(e) { updateStatus('num', 'error', e.message); }
+            } catch (e) { updateStatus('num', 'error', e.message); }
         });
 
-        // --- 6. METADATA ---
+        // --- 6. METADATA EDITOR ---
         let metaDoc, metaFile;
-        document.getElementById('metaFileInput').addEventListener('change', async (e) => {
+        document.getElementById('metaFileInput').addEventListener('change', async e => {
             if (!e.target.files.length) return;
             metaFile = e.target.files[0];
-            metaDoc = await PDFLib.PDFDocument.load(await metaFile.arrayBuffer());
-            document.getElementById('metaTitle').value = metaDoc.getTitle() || '';
-            document.getElementById('metaAuthor').value = metaDoc.getAuthor() || '';
-            document.getElementById('metaSubject').value = metaDoc.getSubject() || '';
-            enableTool('meta');
+            try {
+                metaDoc = await PDFLib.PDFDocument.load(await metaFile.arrayBuffer());
+                document.getElementById('metaFileLabel').textContent = `${metaFile.name} (${formatBytes(metaFile.size)})`;
+                document.getElementById('metaTitle').value = metaDoc.getTitle() || '';
+                document.getElementById('metaAuthor').value = metaDoc.getAuthor() || '';
+                document.getElementById('metaSubject').value = metaDoc.getSubject() || '';
+                document.getElementById('metaCreator').value = metaDoc.getCreator() || '';
+                document.getElementById('metaKeywords').value = metaDoc.getKeywords() || '';
+                enableTool('meta');
+            } catch (err) {
+                updateStatus('meta', 'error', 'Failed to read PDF metadata.');
+            }
         });
         document.getElementById('metaBtn').addEventListener('click', async () => {
-            updateStatus('meta', 'processing', 'Saving metadata...');
+            updateStatus('meta', 'processing', 'Updating document properties...');
             try {
                 metaDoc.setTitle(document.getElementById('metaTitle').value);
                 metaDoc.setAuthor(document.getElementById('metaAuthor').value);
                 metaDoc.setSubject(document.getElementById('metaSubject').value);
+                metaDoc.setCreator(document.getElementById('metaCreator').value);
+                const kw = document.getElementById('metaKeywords').value.split(',').map(s => s.trim()).filter(Boolean);
+                metaDoc.setKeywords(kw);
                 const filename = getFileName(metaFile, 'metadata.pdf');
                 triggerDownload(await metaDoc.save(), filename);
                 updateStatus('meta', 'success', '', filename);
-            } catch(e) { updateStatus('meta', 'error', e.message); }
+            } catch (e) { updateStatus('meta', 'error', e.message); }
         });
 
-        // --- 7. UNLOCK ---
+        // --- 7. UNLOCK PDF ---
         let unlockFile;
-        document.getElementById('unlockFileInput').addEventListener('change', (e) => { if (e.target.files.length) { unlockFile = e.target.files[0]; enableTool('unlock'); }});
+        document.getElementById('unlockFileInput').addEventListener('change', e => {
+            if (e.target.files.length) {
+                unlockFile = e.target.files[0];
+                document.getElementById('unlockFileLabel').textContent = `${unlockFile.name} (${formatBytes(unlockFile.size)})`;
+                enableTool('unlock');
+            }
+        });
         document.getElementById('unlockBtn').addEventListener('click', async () => {
-            updateStatus('unlock', 'processing', 'Decrypting offline...');
+            updateStatus('unlock', 'processing', 'Decrypting via QPDF WebAssembly...');
             try {
                 const qpdf = await getQPDF();
                 const pwd = document.getElementById('unlockPwd').value;
                 qpdf.FS.writeFile('/un_in.pdf', new Uint8Array(await unlockFile.arrayBuffer()));
                 qpdf.callMain(['--password=' + pwd, '--decrypt', '/un_in.pdf', '/un_out.pdf']);
-                
+                const outBytes = qpdf.FS.readFile('/un_out.pdf');
+                try { qpdf.FS.unlink('/un_in.pdf'); qpdf.FS.unlink('/un_out.pdf'); } catch (_) {}
                 const filename = getFileName(unlockFile, 'unlocked.pdf');
-                triggerDownload(qpdf.FS.readFile('/un_out.pdf'), filename);
+                triggerDownload(outBytes, filename);
                 updateStatus('unlock', 'success', '', filename);
-            } catch(e) { updateStatus('unlock', 'error', "Incorrect password or unsupported encryption."); }
+            } catch (e) { updateStatus('unlock', 'error', 'Incorrect password or unsupported encryption.'); }
         });
 
-        // --- 8. PROTECT ---
+        // --- 8. PROTECT PDF ---
         let protectFile;
-        document.getElementById('protectFileInput').addEventListener('change', (e) => { if (e.target.files.length) { protectFile = e.target.files[0]; enableTool('protect'); }});
+        document.getElementById('protectFileInput').addEventListener('change', e => {
+            if (e.target.files.length) {
+                protectFile = e.target.files[0];
+                document.getElementById('protectFileLabel').textContent = `${protectFile.name} (${formatBytes(protectFile.size)})`;
+                enableTool('protect');
+            }
+        });
         document.getElementById('protectBtn').addEventListener('click', async () => {
             const userPw = document.getElementById('protectUserPw').value;
-            if (!userPw) return updateStatus('protect', 'error', 'Password to open is required.');
-            updateStatus('protect', 'processing', 'Encrypting (256-bit AES)...');
+            if (!userPw) {
+                updateStatus('protect', 'error', 'Please enter a password to encrypt the PDF.');
+                return;
+            }
+            updateStatus('protect', 'processing', 'Encrypting with 256-bit AES...');
             try {
                 const qpdf = await getQPDF();
                 qpdf.FS.writeFile('/pr_in.pdf', new Uint8Array(await protectFile.arrayBuffer()));
-                
                 let args = ['--encrypt', userPw, document.getElementById('protectOwnerPw').value || userPw, '256'];
                 if (document.getElementById('cbNoPrint').checked) args.push('--print=none');
                 if (document.getElementById('cbNoCopy').checked) args.push('--extract=n');
                 if (document.getElementById('cbNoEdit').checked) args.push('--modify=none');
                 args.push('--', '/pr_in.pdf', '/pr_out.pdf');
-                
+
                 qpdf.callMain(args);
+                const outBytes = qpdf.FS.readFile('/pr_out.pdf');
+                try { qpdf.FS.unlink('/pr_in.pdf'); qpdf.FS.unlink('/pr_out.pdf'); } catch (_) {}
                 const filename = getFileName(protectFile, 'protected.pdf');
-                triggerDownload(qpdf.FS.readFile('/pr_out.pdf'), filename);
+                triggerDownload(outBytes, filename);
                 updateStatus('protect', 'success', '', filename);
-            } catch(e) { updateStatus('protect', 'error', "Failed to encrypt document."); }
+            } catch (e) { updateStatus('protect', 'error', 'Encryption failed. Ensure the input PDF is not already locked.'); }
         });
 
-        // --- 9. PDF TO IMG ---
+        // --- 9. PDF TO IMAGES ---
         let pdfImgFile;
-        document.getElementById('pdfImgFileInput').addEventListener('change', (e) => { if (e.target.files.length) { pdfImgFile = e.target.files[0]; enableTool('pdfImg'); }});
+        document.getElementById('pdfImgFileInput').addEventListener('change', e => {
+            if (e.target.files.length) {
+                pdfImgFile = e.target.files[0];
+                document.getElementById('pdfImgFileLabel').textContent = `${pdfImgFile.name} (${formatBytes(pdfImgFile.size)})`;
+                enableTool('pdfImg');
+            }
+        });
         document.getElementById('pdfImgBtn').addEventListener('click', async () => {
-            updateStatus('pdfImg', 'processing', 'Rendering high-res pages...');
+            const fmt = document.getElementById('pdfImgFormat').value;
+            const scale = parseFloat(document.getElementById('pdfImgScale').value) || 2.0;
+            const mime = fmt === 'png' ? 'image/png' : 'image/jpeg';
+            const ext = fmt === 'png' ? 'png' : 'jpg';
+
+            updateStatus('pdfImg', 'processing', 'Loading PDF pages...');
             try {
                 const pdf = await pdfjsLib.getDocument(await pdfImgFile.arrayBuffer()).promise;
                 const zip = new JSZip();
                 for (let i = 1; i <= pdf.numPages; i++) {
                     updateStatus('pdfImg', 'processing', `Rendering page ${i} of ${pdf.numPages}...`);
                     const page = await pdf.getPage(i);
-                    const viewport = page.getViewport({ scale: 2.0 }); 
+                    const viewport = page.getViewport({ scale });
                     const canvas = document.createElement('canvas');
                     canvas.width = viewport.width;
                     canvas.height = viewport.height;
                     await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-                    zip.file(`page_${i}.jpg`, canvas.toDataURL('image/jpeg', 0.92).split('base64,')[1], { base64: true });
+                    zip.file(`page_${String(i).padStart(2, '0')}.${ext}`, canvas.toDataURL(mime, 0.92).split('base64,')[1], { base64: true });
                 }
                 const filename = getFileName(pdfImgFile, 'images.zip');
                 triggerDownload(await zip.generateAsync({ type: 'blob' }), filename);
                 updateStatus('pdfImg', 'success', '', filename);
-            } catch(e) { updateStatus('pdfImg', 'error', e.message); }
+            } catch (e) { updateStatus('pdfImg', 'error', e.message); }
         });
 
-        // --- 10. E-SIGN ---
+        // --- 10. E-SIGN PDF ---
         let signFile;
-        document.getElementById('signFileInput').addEventListener('change', (e) => { if (e.target.files.length) { signFile = e.target.files[0]; enableTool('sign'); }});
+        document.getElementById('signFileInput').addEventListener('change', e => {
+            if (e.target.files.length) {
+                signFile = e.target.files[0];
+                document.getElementById('signFileLabel').textContent = `${signFile.name} (${formatBytes(signFile.size)})`;
+                enableTool('sign');
+                setTimeout(resizeSignatureCanvas, 50);
+            }
+        });
         document.getElementById('signBtn').addEventListener('click', async () => {
-            if (signaturePad.isEmpty()) return updateStatus('sign', 'error', 'Please draw your signature first.');
-            updateStatus('sign', 'processing', 'Stamping signature...');
+            if (signaturePad.isEmpty()) {
+                updateStatus('sign', 'error', 'Please draw your signature on the pad before signing.');
+                return;
+            }
+            updateStatus('sign', 'processing', 'Embedding signature into PDF...');
             try {
                 const doc = await PDFLib.PDFDocument.load(await signFile.arrayBuffer());
                 const img = await doc.embedPng(signaturePad.toDataURL("image/png"));
-                
+                const targetMode = document.getElementById('signTargetPage').value;
                 const vPos = document.getElementById('signVPos').value;
                 const hPos = document.getElementById('signHPos').value;
-                const target = document.getElementById('signPageTarget').value;
-                
                 const pages = doc.getPages();
-                const targetPages = target === 'all' ? pages : (target === 'last' ? [pages[pages.length - 1]] : [pages[0]]);
-                const dims = img.scale(0.3);
+
+                const targetPages = targetMode === 'all' ? pages : targetMode === 'first' ? [pages[0]] : [pages[pages.length - 1]];
 
                 targetPages.forEach(page => {
                     const { width, height } = page.getSize();
-                    let x = 35;
-                    if (hPos === 'center') x = (width - dims.width) / 2;
-                    if (hPos === 'right') x = width - dims.width - 35;
-                    
-                    let y = 35;
-                    if (vPos === 'middle') y = (height - dims.height) / 2;
-                    if (vPos === 'top') y = height - dims.height - 35;
-                    
-                    page.drawImage(img, { x, y, width: dims.width, height: dims.height });
+                    const maxSigWidth = Math.min(180, width * 0.35);
+                    const scale = maxSigWidth / img.width;
+                    const sW = img.width * scale;
+                    const sH = img.height * scale;
+
+                    const x = hPos === 'center' ? (width - sW) / 2 : hPos === 'right' ? width - sW - 36 : 36;
+                    const y = vPos === 'middle' ? (height - sH) / 2 : vPos === 'top' ? height - sH - 36 : 36;
+                    page.drawImage(img, { x, y, width: sW, height: sH });
                 });
-                
+
                 const filename = getFileName(signFile, 'signed.pdf');
                 triggerDownload(await doc.save(), filename);
                 updateStatus('sign', 'success', '', filename);
-            } catch(e) { updateStatus('sign', 'error', e.message); }
+            } catch (e) { updateStatus('sign', 'error', e.message); }
         });
     </script>
 </body>
